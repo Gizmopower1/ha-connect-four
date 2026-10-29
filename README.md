@@ -25,7 +25,7 @@ nettbrettet på veggen eller PC-en. Med poengtavle, serier, push-varsler og et e
 Spillere og poeng endres senere under **Konfigurer** på integrasjonen.
 
 ## Kort til dashbord
-Kortet lastes automatisk – ingen ressurs må legges til.
+Kortet lastes automatisk – integrasjonen registrerer selv dashbordressursen (`/fire_pa_rad_static/fire-pa-rad.js`).
 
 ```yaml
 type: custom:fire-pa-rad-card   # fullt spill (lobby, brett, poengtavle)

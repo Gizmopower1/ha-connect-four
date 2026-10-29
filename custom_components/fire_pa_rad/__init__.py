@@ -14,6 +14,7 @@ from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, Supp
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.service import async_register_admin_service
+from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
@@ -50,12 +51,38 @@ def _manager(hass: HomeAssistant) -> FireParadManager:
     return entries[0].runtime_data
 
 
+async def _async_register_lovelace_resource(hass: HomeAssistant) -> None:
+    """Keep a dashboard resource for the card, so it is defined before any dashboard renders.
+
+    Some layouts (e.g. layout-card) build their cards immediately and never retry,
+    so relying only on add_extra_js_url can show a configuration error.
+    """
+    try:
+        from homeassistant.components.lovelace.const import LOVELACE_DATA
+        from homeassistant.components.lovelace.resources import ResourceStorageCollection
+    except ImportError:
+        return
+    if (data := hass.data.get(LOVELACE_DATA)) is None or not isinstance(data.resources, ResourceStorageCollection):
+        return
+    resources = data.resources
+    await resources.async_get_info()
+    ours = [item for item in resources.async_items() if str(item.get("url", "")).startswith(STATIC_URL)]
+    if not ours:
+        await resources.async_create_item({"res_type": "module", "url": MODULE_URL})
+        return
+    if ours[0]["url"] != MODULE_URL:
+        await resources.async_update_item(ours[0]["id"], {"res_type": "module", "url": MODULE_URL})
+    for extra in ours[1:]:
+        await resources.async_delete_item(extra["id"])
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Register the frontend file and the services."""
     await hass.http.async_register_static_paths(
         [StaticPathConfig(STATIC_URL, str(Path(__file__).parent / "frontend"), False)]
     )
     add_extra_js_url(hass, MODULE_URL)
+    async_at_started(hass, _async_register_lovelace_resource)
 
     async def start(call: ServiceCall) -> ServiceResponse:
         game_id = await _manager(hass).async_start(call.context.user_id, call.data[ATTR_OPPONENT], call.data.get(ATTR_PLAYER))

@@ -1,5 +1,5 @@
 /* 4 på rad – card + sidebar panel for the fire_pa_rad integration. */
-const FPR_VERSION = "0.1.1";
+const FPR_VERSION = "0.1.2";
 
 const FPR_T = {
   nb: {

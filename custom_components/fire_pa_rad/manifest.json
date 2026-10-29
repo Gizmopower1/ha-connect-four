@@ -2,6 +2,7 @@
   "domain": "fire_pa_rad",
   "name": "4 på rad",
   "after_dependencies": [
+    "lovelace",
     "mobile_app"
   ],
   "codeowners": [
@@ -19,5 +20,5 @@
   "issue_tracker": "https://github.com/Gizmopower1/ha-fire-pa-rad/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.1.1"
+  "version": "0.1.2"
 }
