@@ -1,0 +1,98 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "4 på rad",
+        "description": "Velg personene i Home Assistant som skal spille. Hvert par får sitt eget parti, så alle kan spille mot alle samtidig.",
+        "data": {
+          "players": "Spillere",
+          "show_panel": "Vis i sidemenyen",
+          "points_win": "Poeng for seier",
+          "points_draw": "Poeng for uavgjort",
+          "lightning_moves": "Lynseier: maks egne trekk",
+          "lightning_bonus": "Lynseier: bonuspoeng"
+        }
+      },
+      "notify": {
+        "title": "Push-varsler",
+        "description": "Velg mobilen (mobilappen) som skal få beskjed når det er spillerens tur. Velg — for ingen varsler."
+      }
+    },
+    "error": {
+      "min_players": "Velg minst to spillere."
+    },
+    "abort": {
+      "single_instance_allowed": "4 på rad er allerede satt opp. Bruk «Konfigurer» for å endre spillerne."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "4 på rad",
+        "description": "Endre spillere og poeng.",
+        "data": {
+          "players": "Spillere",
+          "show_panel": "Vis i sidemenyen",
+          "points_win": "Poeng for seier",
+          "points_draw": "Poeng for uavgjort",
+          "lightning_moves": "Lynseier: maks egne trekk",
+          "lightning_bonus": "Lynseier: bonuspoeng"
+        }
+      },
+      "notify": {
+        "title": "Push-varsler",
+        "description": "Velg mobilen (mobilappen) som skal få beskjed når det er spillerens tur. Velg — for ingen varsler."
+      }
+    },
+    "error": {
+      "min_players": "Velg minst to spillere."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "games": { "name": "Partier i gang" },
+      "points": { "name": "Poeng {name}" }
+    },
+    "switch": {
+      "notifications": { "name": "Push-varsler" }
+    }
+  },
+  "exceptions": {
+    "not_loaded": { "message": "4 på rad er ikke satt opp." },
+    "unknown_game": { "message": "Ukjent parti: {game_id}." },
+    "invalid_players": { "message": "Velg to forskjellige spillere som er med i 4 på rad." },
+    "not_playing": { "message": "Det er ikke noe parti i gang." },
+    "not_your_game": { "message": "Du kan bare spille i dine egne partier." },
+    "not_your_turn": { "message": "Det er {name} sin tur." },
+    "column_full": { "message": "Den kolonnen er full." }
+  },
+  "services": {
+    "start": {
+      "name": "Start parti",
+      "description": "Start et nytt parti (eller ny runde). Kalles det av en innlogget spiller, utfordrer den spilleren motstanderen.",
+      "fields": {
+        "opponent": { "name": "Motstander", "description": "Personen det skal spilles mot." },
+        "player": { "name": "Spiller", "description": "Trengs bare når den som kaller ikke er spiller (f.eks. felles nettbrett)." }
+      }
+    },
+    "drop": {
+      "name": "Legg brikke",
+      "description": "Slipp brikken til den som har tur i en kolonne.",
+      "fields": {
+        "game_id": { "name": "Parti", "description": "Parti-id, f.eks. adrian_johnsen__gisle_johnsen." },
+        "column": { "name": "Kolonne", "description": "Kolonne 0–6, fra venstre." }
+      }
+    },
+    "resign": {
+      "name": "Gi opp",
+      "description": "Gi opp partiet. Med færre enn to brikker lagt avbrytes partiet uten poeng.",
+      "fields": {
+        "game_id": { "name": "Parti", "description": "Parti-id." }
+      }
+    },
+    "reset_scores": {
+      "name": "Nullstill poeng",
+      "description": "Fjern alle partier, serier og poeng (kun admin)."
+    }
+  }
+}

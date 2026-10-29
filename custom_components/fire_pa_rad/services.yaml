@@ -1,0 +1,32 @@
+start:
+  fields:
+    opponent:
+      required: true
+      selector:
+        entity:
+          domain: person
+    player:
+      selector:
+        entity:
+          domain: person
+drop:
+  fields:
+    game_id:
+      required: true
+      example: adrian_johnsen__gisle_johnsen
+      selector:
+        text:
+    column:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 6
+          mode: box
+resign:
+  fields:
+    game_id:
+      required: true
+      selector:
+        text:
+reset_scores:

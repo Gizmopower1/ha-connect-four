@@ -1,0 +1,98 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Four",
+        "description": "Choose the people in Home Assistant who will play. Each pair gets its own game, so everyone can play against everyone at the same time.",
+        "data": {
+          "players": "Players",
+          "show_panel": "Show in the sidebar",
+          "points_win": "Points for a win",
+          "points_draw": "Points for a draw",
+          "lightning_moves": "Lightning win: max own moves",
+          "lightning_bonus": "Lightning win: bonus points"
+        }
+      },
+      "notify": {
+        "title": "Push notifications",
+        "description": "Pick the phone (mobile app) that should be notified when it is each player's turn. Choose — for no notifications."
+      }
+    },
+    "error": {
+      "min_players": "Choose at least two players."
+    },
+    "abort": {
+      "single_instance_allowed": "Connect Four is already set up. Use Configure to change the players."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Connect Four",
+        "description": "Change players and scoring.",
+        "data": {
+          "players": "Players",
+          "show_panel": "Show in the sidebar",
+          "points_win": "Points for a win",
+          "points_draw": "Points for a draw",
+          "lightning_moves": "Lightning win: max own moves",
+          "lightning_bonus": "Lightning win: bonus points"
+        }
+      },
+      "notify": {
+        "title": "Push notifications",
+        "description": "Pick the phone (mobile app) that should be notified when it is each player's turn. Choose — for no notifications."
+      }
+    },
+    "error": {
+      "min_players": "Choose at least two players."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "games": { "name": "Games in progress" },
+      "points": { "name": "Points {name}" }
+    },
+    "switch": {
+      "notifications": { "name": "Push notifications" }
+    }
+  },
+  "exceptions": {
+    "not_loaded": { "message": "Connect Four is not set up." },
+    "unknown_game": { "message": "Unknown game: {game_id}." },
+    "invalid_players": { "message": "Choose two different players who take part in Connect Four." },
+    "not_playing": { "message": "There is no game in progress." },
+    "not_your_game": { "message": "You can only play in your own games." },
+    "not_your_turn": { "message": "It is {name}'s turn." },
+    "column_full": { "message": "That column is full." }
+  },
+  "services": {
+    "start": {
+      "name": "Start game",
+      "description": "Start a new game (or a new round). When called by a logged-in player, that player challenges the opponent.",
+      "fields": {
+        "opponent": { "name": "Opponent", "description": "The person to play against." },
+        "player": { "name": "Player", "description": "Only needed when the caller is not a player (e.g. a shared tablet)." }
+      }
+    },
+    "drop": {
+      "name": "Drop piece",
+      "description": "Drop the current player's piece in a column.",
+      "fields": {
+        "game_id": { "name": "Game", "description": "Game id, e.g. adrian_johnsen__gisle_johnsen." },
+        "column": { "name": "Column", "description": "Column 0–6, left to right." }
+      }
+    },
+    "resign": {
+      "name": "Resign",
+      "description": "Give up the game. With fewer than two pieces played the game is cancelled without points.",
+      "fields": {
+        "game_id": { "name": "Game", "description": "Game id." }
+      }
+    },
+    "reset_scores": {
+      "name": "Reset scores",
+      "description": "Remove all games, series and points (admin only)."
+    }
+  }
+}
