@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 DOMAIN = "fire_pa_rad"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 CONF_PLAYERS = "players"
 CONF_NOTIFY = "notify_services"

@@ -1,5 +1,5 @@
 /* 4 på rad – card + sidebar panel for the fire_pa_rad integration. */
-const FPR_VERSION = "0.1.0";
+const FPR_VERSION = "0.1.1";
 
 const FPR_T = {
   nb: {
@@ -62,7 +62,7 @@ const FPR_CSS = `
   .back { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; color: var(--primary-color); font-weight: 600; }
   .board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 8px 6px 10px; border-radius: 22px; max-width: 520px; margin: 0 auto;
            background: linear-gradient(180deg, #2372e8 0%, #0d3d91 100%); box-shadow: 0 10px 26px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.25); }
-  .col { display: flex; flex-direction: column; align-items: center; gap: 6%; padding: 2px 0; border-radius: 12px; cursor: pointer; }
+  .col { display: flex; flex-direction: column; align-items: center; gap: clamp(3px, 1.1vw, 7px); padding: 2px 0; border-radius: 12px; cursor: pointer; min-width: 0; }
   .col.locked { cursor: default; }
   .col:not(.locked):hover { background: rgba(255,255,255,.08); }
   .col > div { width: 86%; aspect-ratio: 1; border-radius: 50%; }
@@ -78,7 +78,7 @@ const FPR_CSS = `
   @keyframes fpr-fall { from { transform: translateY(calc(var(--rad) * -116%)); } to { transform: translateY(0); } }
   .win { animation: fpr-pulse .8s ease-in-out infinite alternate; box-shadow: 0 0 0 3px #fff, 0 0 14px 4px rgba(255,255,255,.8) !important; }
   @keyframes fpr-pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
-  .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; position: relative; clear: both; }
   .btn { flex: 1; min-width: 120px; border: none; border-radius: 14px; padding: 14px; font-size: 1em; font-weight: 700; color: #fff; cursor: pointer; }
   .btn.go { background: linear-gradient(90deg, #2e7d32, #43a047); }
   .btn.stop { background: #8e2424; }
