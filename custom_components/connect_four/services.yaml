@@ -13,7 +13,7 @@ drop:
   fields:
     game_id:
       required: true
-      example: adrian_johnsen__gisle_johnsen
+      example: player1__player2
       selector:
         text:
     column:

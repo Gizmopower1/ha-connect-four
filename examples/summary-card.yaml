@@ -1,0 +1,11 @@
+# Compact "your turn" card, e.g. on your main dashboard.
+# Tapping it opens the game in the sidebar panel.
+# The visibility block is optional: it hides the card from users who are not players.
+# Replace the ids with your players' user ids (Settings → People → Users, advanced mode).
+type: custom:connect-four-card
+mode: summary
+visibility:
+  - condition: user
+    users:
+      - <user id of player1>
+      - <user id of player2>

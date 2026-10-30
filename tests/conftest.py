@@ -1,4 +1,4 @@
-"""Fixtures for 4 på rad tests."""
+"""Fixtures for Connect Four tests."""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ import pytest
 from homeassistant.core import HomeAssistant
 
 PERSONS = {
-    "person.anna": ("Anna Test", "user-anna"),
-    "person.bjorn": ("Bjørn Test", "user-bjorn"),
-    "person.cecilie": ("Cecilie Test", "user-cecilie"),
+    "person.player1": ("Player1", "user-player1"),
+    "person.player2": ("Player2", "user-player2"),
+    "person.player3": ("Player3", "user-player3"),
 }
 
 
@@ -25,9 +25,9 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 def frontend_mocks():
     """Avoid needing the real frontend/http stack."""
     with (
-        patch("custom_components.fire_pa_rad.add_extra_js_url") as js,
-        patch("custom_components.fire_pa_rad.async_register_built_in_panel") as panel,
-        patch("custom_components.fire_pa_rad.async_remove_panel") as remove,
+        patch("custom_components.connect_four.add_extra_js_url") as js,
+        patch("custom_components.connect_four.async_register_built_in_panel") as panel,
+        patch("custom_components.connect_four.async_remove_panel") as remove,
     ):
         yield {"js": js, "panel": panel, "remove": remove}
 

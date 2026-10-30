@@ -26,6 +26,7 @@ from .const import (
     DEFAULT_POINTS_DRAW,
     DEFAULT_POINTS_WIN,
     DOMAIN,
+    LEGACY_DOMAIN,
     NO_NOTIFY,
     PANEL_URL_PATH,
     RESULT_DRAW,
@@ -70,7 +71,7 @@ def game_id_for(person_a: str, person_b: str) -> str:
     return f"{first.split('.', 1)[1]}__{second.split('.', 1)[1]}"
 
 
-class FireParadManager:
+class ConnectFourManager:
     """Owns the persisted state of all games and scores."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -84,6 +85,17 @@ class FireParadManager:
         """Load persisted games and scores."""
         if stored := await self._store.async_load():
             self.data.update(stored)
+        elif legacy := await self._async_load_legacy():
+            self.data.update(legacy)
+            self._store.async_delay_save(lambda: self.data, 1)
+            _LOGGER.info("Imported games and scores from %s", LEGACY_DOMAIN)
+
+    async def _async_load_legacy(self) -> dict[str, Any] | None:
+        """Return games and scores saved by the earlier fire_pa_rad integration, if any."""
+        for legacy in self.hass.config_entries.async_entries(LEGACY_DOMAIN):
+            if data := await Store[dict[str, Any]](self.hass, STORAGE_VERSION, f"{LEGACY_DOMAIN}.{legacy.entry_id}").async_load():
+                return data
+        return None
 
     # --- configuration -------------------------------------------------
 

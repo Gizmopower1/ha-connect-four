@@ -1,0 +1,8 @@
+# OPTIONAL – only for users of WallPanel (https://github.com/j-a-n/lovelace-wallpanel).
+# Shows whose turn it is and who is leading on top of the screensaver photos.
+# Add the card to the "info" cards in your dashboard's wallpanel configuration:
+wallpanel:
+  cards:
+    - type: custom:connect-four-card
+      mode: status
+      glass: true   # dark see-through background, readable on photos

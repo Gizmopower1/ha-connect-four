@@ -1,6 +1,6 @@
 """Tests for the pure game logic."""
 
-from custom_components.fire_pa_rad import game as g
+from custom_components.connect_four import game as g
 
 
 def board_with(cells: dict[tuple[int, int], str]) -> str:

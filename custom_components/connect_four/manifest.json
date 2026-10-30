@@ -1,6 +1,6 @@
 {
-  "domain": "fire_pa_rad",
-  "name": "4 på rad",
+  "domain": "connect_four",
+  "name": "Connect Four",
   "after_dependencies": [
     "lovelace",
     "mobile_app"
@@ -14,11 +14,11 @@
     "http",
     "person"
   ],
-  "documentation": "https://github.com/Gizmopower1/ha-fire-pa-rad",
+  "documentation": "https://github.com/Gizmopower1/ha-connect-four",
   "integration_type": "service",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/Gizmopower1/ha-fire-pa-rad/issues",
+  "issue_tracker": "https://github.com/Gizmopower1/ha-connect-four/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.1.2"
+  "version": "0.2.0"
 }

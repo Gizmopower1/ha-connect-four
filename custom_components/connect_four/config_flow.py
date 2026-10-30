@@ -24,6 +24,7 @@ from .const import (
     DEFAULT_POINTS_DRAW,
     DEFAULT_POINTS_WIN,
     DOMAIN,
+    LEGACY_DOMAIN,
     NO_NOTIFY,
 )
 
@@ -46,6 +47,12 @@ def _guess_notify(hass: HomeAssistant, person: str) -> str:
             if hass.services.has_service("notify", service):
                 return f"notify.{service}"
     return NO_NOTIFY
+
+
+def _legacy_options(hass: HomeAssistant) -> dict[str, Any]:
+    """Settings from the earlier fire_pa_rad integration, used as defaults."""
+    entries = hass.config_entries.async_entries(LEGACY_DOMAIN)
+    return dict(entries[0].options) if entries else {}
 
 
 def _label(hass: HomeAssistant, person: str) -> str:
@@ -91,8 +98,8 @@ def _collect_notify(hass: HomeAssistant, players: list[str], user_input: dict[st
     return {p: user_input.get(_label(hass, p), NO_NOTIFY) for p in players}
 
 
-class FireParadConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Set up 4 på rad."""
+class ConnectFourConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Set up Connect Four."""
 
     VERSION = 1
 
@@ -107,23 +114,23 @@ class FireParadConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 self._options = {k: (int(v) if isinstance(v, float) else v) for k, v in user_input.items()}
                 return await self.async_step_notify()
-        return self.async_show_form(step_id="user", data_schema=_players_schema(self.hass, user_input or {}), errors=errors)
+        return self.async_show_form(step_id="user", data_schema=_players_schema(self.hass, user_input or _legacy_options(self.hass)), errors=errors)
 
     async def async_step_notify(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         players = self._options[CONF_PLAYERS]
         if user_input is not None:
             self._options[CONF_NOTIFY] = _collect_notify(self.hass, players, user_input)
-            title = "4 på rad" if (self.hass.config.language or "").split("-")[0] in ("nb", "no", "nn") else "Connect Four"
-            return self.async_create_entry(title=title, data={}, options=self._options)
-        return self.async_show_form(step_id="notify", data_schema=_notify_schema(self.hass, players, {}))
+            return self.async_create_entry(title="Connect Four", data={}, options=self._options)
+        legacy = _legacy_options(self.hass).get(CONF_NOTIFY, {})
+        return self.async_show_form(step_id="notify", data_schema=_notify_schema(self.hass, players, legacy))
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> FireParadOptionsFlow:
-        return FireParadOptionsFlow()
+    def async_get_options_flow(config_entry: ConfigEntry) -> ConnectFourOptionsFlow:
+        return ConnectFourOptionsFlow()
 
 
-class FireParadOptionsFlow(OptionsFlow):
+class ConnectFourOptionsFlow(OptionsFlow):
     """Change players, phones and scoring."""
 
     def __init__(self) -> None:

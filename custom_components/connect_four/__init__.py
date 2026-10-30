@@ -1,4 +1,4 @@
-"""4 på rad – a Connect Four game for the whole family in Home Assistant."""
+"""Connect Four – a family game for Home Assistant."""
 
 from __future__ import annotations
 
@@ -25,6 +25,7 @@ from .const import (
     CONF_SHOW_PANEL,
     DOMAIN,
     FRONTEND_FILE,
+    LEGACY_STATIC_URL,
     PANEL_ELEMENT,
     PANEL_URL_PATH,
     SERVICE_DROP,
@@ -34,17 +35,17 @@ from .const import (
     STATIC_URL,
     VERSION,
 )
-from .manager import FireParadManager
+from .manager import ConnectFourManager
 
 PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-type FireParadConfigEntry = ConfigEntry[FireParadManager]
+type ConnectFourConfigEntry = ConfigEntry[ConnectFourManager]
 
 MODULE_URL = f"{STATIC_URL}/{FRONTEND_FILE}?v={VERSION}"
 
 
-def _manager(hass: HomeAssistant) -> FireParadManager:
+def _manager(hass: HomeAssistant) -> ConnectFourManager:
     entries = hass.config_entries.async_loaded_entries(DOMAIN)
     if not entries:
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_loaded")
@@ -66,6 +67,9 @@ async def _async_register_lovelace_resource(hass: HomeAssistant) -> None:
         return
     resources = data.resources
     await resources.async_get_info()
+    for item in resources.async_items():
+        if str(item.get("url", "")).startswith(LEGACY_STATIC_URL):
+            await resources.async_delete_item(item["id"])
     ours = [item for item in resources.async_items() if str(item.get("url", "")).startswith(STATIC_URL)]
     if not ours:
         await resources.async_create_item({"res_type": "module", "url": MODULE_URL})
@@ -111,9 +115,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: FireParadConfigEntry) -> bool:
-    """Set up 4 på rad from a config entry."""
-    manager = FireParadManager(hass, entry)
+async def async_setup_entry(hass: HomeAssistant, entry: ConnectFourConfigEntry) -> bool:
+    """Set up Connect Four from a config entry."""
+    manager = ConnectFourManager(hass, entry)
     await manager.async_load()
     entry.runtime_data = manager
 
@@ -134,11 +138,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: FireParadConfigEntry) ->
     return True
 
 
-async def _async_reload(hass: HomeAssistant, entry: FireParadConfigEntry) -> None:
+async def _async_reload(hass: HomeAssistant, entry: ConnectFourConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: FireParadConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ConnectFourConfigEntry) -> bool:
     """Unload a config entry."""
     async_remove_panel(hass, PANEL_URL_PATH, warn_if_unknown=False)
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

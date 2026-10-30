@@ -79,7 +79,7 @@
       "name": "Drop piece",
       "description": "Drop the current player's piece in a column.",
       "fields": {
-        "game_id": { "name": "Game", "description": "Game id, e.g. adrian_johnsen__gisle_johnsen." },
+        "game_id": { "name": "Game", "description": "Game id, e.g. player1__player2." },
         "column": { "name": "Column", "description": "Column 0–6, left to right." }
       }
     },

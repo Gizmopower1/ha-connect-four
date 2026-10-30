@@ -1,10 +1,10 @@
-/* 4 på rad – card + sidebar panel for the fire_pa_rad integration. */
-const FPR_VERSION = "0.1.2";
+/* Connect Four – card + sidebar panel for the connect_four integration. */
+const CF_VERSION = "0.2.0";
 
-const FPR_T = {
+const CF_T = {
   nb: {
     title: "4 på rad", your_games: "Dine partier", all_games: "Alle partier", scoreboard: "Poengtavle",
-    rules: "Slik spiller du", back: "Alle partier", your_turn: "Din tur!", your_turn_vs: "Din tur mot {n}",
+    rules: "Slik spiller du", back: "Hovedmeny", your_turn: "Din tur!", your_turn_vs: "Din tur mot {n}",
     turn_of: "{n} sin tur", turn_vs: "{n} sin tur mot {o}", waiting_for: "Venter på {n}", challenge: "Utfordre {n}", tap_start: "Trykk for å starte et parti",
     you_won: "Du vant!", you_beat: "Du slo {n}!", won: "{n} vant!", they_won: "{n} vant denne gangen", draw: "Uavgjort!",
     draw_vs: "Uavgjort mot {n}", new_round: "Ny runde", start: "Start spill", resign: "Gi opp", sure: "Sikker? Motstanderen får seieren.",
@@ -21,7 +21,7 @@ const FPR_T = {
   },
   en: {
     title: "Connect Four", your_games: "Your games", all_games: "All games", scoreboard: "Scoreboard",
-    rules: "How to play", back: "All games", your_turn: "Your turn!", your_turn_vs: "Your turn against {n}",
+    rules: "How to play", back: "Main menu", your_turn: "Your turn!", your_turn_vs: "Your turn against {n}",
     turn_of: "{n}'s turn", turn_vs: "{n}'s turn against {o}", waiting_for: "Waiting for {n}", challenge: "Challenge {n}", tap_start: "Tap to start a game",
     you_won: "You won!", you_beat: "You beat {n}!", won: "{n} won!", they_won: "{n} won this time", draw: "Draw!",
     draw_vs: "Draw against {n}", new_round: "New round", start: "Start game", resign: "Resign", sure: "Sure? Your opponent wins.",
@@ -38,9 +38,9 @@ const FPR_T = {
   },
 };
 
-const FPR_COLORS = ["#ff7043", "#ab47bc", "#42a5f5", "#66bb6a", "#ffa726", "#26c6da", "#ec407a", "#8d6e63"];
+const CF_COLORS = ["#ff7043", "#ab47bc", "#42a5f5", "#66bb6a", "#ffa726", "#26c6da", "#ec407a", "#8d6e63"];
 
-const FPR_CSS = `
+const CF_CSS = `
   :host { display: block; }
   ha-card { padding: 16px; overflow: hidden; }
   .muted { opacity: .7; font-size: .88em; }
@@ -59,7 +59,11 @@ const FPR_CSS = `
   .status { padding: 14px 16px; border-radius: 16px; background: var(--secondary-background-color, rgba(127,127,127,.12)); margin-bottom: 12px; }
   .status .big { font-size: 1.4em; font-weight: 700; }
   .series { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--divider-color, rgba(127,127,127,.3)); }
-  .back { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; color: var(--primary-color); font-weight: 600; }
+  .back { cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box; margin-bottom: 12px;
+          padding: 14px 16px; border: none; border-radius: 14px; background: var(--primary-color); color: var(--text-primary-color, #fff);
+          font-size: 1.1em; font-weight: 700; box-shadow: 0 3px 10px rgba(0,0,0,.25); transition: transform .1s; }
+  .back:active { transform: scale(.98); }
+  .back ha-icon { --mdc-icon-size: 24px; }
   .board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 8px 6px 10px; border-radius: 22px; max-width: 520px; margin: 0 auto;
            background: linear-gradient(180deg, #2372e8 0%, #0d3d91 100%); box-shadow: 0 10px 26px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.25); }
   .col { display: flex; flex-direction: column; align-items: center; gap: clamp(3px, 1.1vw, 7px); padding: 2px 0; border-radius: 12px; cursor: pointer; min-width: 0; }
@@ -74,10 +78,10 @@ const FPR_CSS = `
   .r { background: radial-gradient(circle at 35% 30%, #ff8a80, #e53935 55%, #a31515); }
   .y { background: radial-gradient(circle at 35% 30%, #fff59d, #fdd835 55%, #c6a700); }
   .cell.r, .cell.y { box-shadow: inset 0 -3px 6px rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.4); }
-  .last { animation: fpr-fall .6s cubic-bezier(.55,0,.8,1.25); }
-  @keyframes fpr-fall { from { transform: translateY(calc(var(--rad) * -116%)); } to { transform: translateY(0); } }
-  .win { animation: fpr-pulse .8s ease-in-out infinite alternate; box-shadow: 0 0 0 3px #fff, 0 0 14px 4px rgba(255,255,255,.8) !important; }
-  @keyframes fpr-pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+  .last { animation: cf-fall .6s cubic-bezier(.55,0,.8,1.25); }
+  @keyframes cf-fall { from { transform: translateY(calc(var(--rad) * -116%)); } to { transform: translateY(0); } }
+  .win { animation: cf-pulse .8s ease-in-out infinite alternate; box-shadow: 0 0 0 3px #fff, 0 0 14px 4px rgba(255,255,255,.8) !important; }
+  @keyframes cf-pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; position: relative; clear: both; }
   .btn { flex: 1; min-width: 120px; border: none; border-radius: 14px; padding: 14px; font-size: 1em; font-weight: 700; color: #fff; cursor: pointer; }
   .btn.go { background: linear-gradient(90deg, #2e7d32, #43a047); }
@@ -97,16 +101,16 @@ const FPR_CSS = `
   .kicker { opacity: .7; font-size: .8em; letter-spacing: .06em; text-transform: uppercase; }
 `;
 
-const fprEsc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const fprLang = (hass) => (["nb", "no", "nn"].includes(String(hass?.locale?.language || hass?.language || "en").split("-")[0]) ? "nb" : "en");
-const fprGameId = (a, b) => [a, b].sort().map((p) => p.split(".")[1]).join("__");
-const fprNavigate = (path) => { history.pushState(null, "", path); window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } })); };
+const cfEsc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const cfLang = (hass) => (["nb", "no", "nn"].includes(String(hass?.locale?.language || hass?.language || "en").split("-")[0]) ? "nb" : "en");
+const cfGameId = (a, b) => [a, b].sort().map((p) => p.split(".")[1]).join("__");
+const cfNavigate = (path) => { history.pushState(null, "", path); window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } })); };
 
-class FireParadCard extends HTMLElement {
+class ConnectFourCard extends HTMLElement {
   static getStubConfig() { return { mode: "full" }; }
 
   setConfig(config) {
-    this._config = { entity: "sensor.fire_pa_rad", mode: "full", navigation_path: "/fire-pa-rad", ...config };
+    this._config = { entity: "sensor.connect_four", mode: "full", navigation_path: "/connect-four", ...config };
     this._sig = null;
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
@@ -123,14 +127,14 @@ class FireParadCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const st = hass.states[this._config.entity];
-    const sig = [st?.last_updated, hass.user?.id, fprLang(hass), this._selected, this._confirm, this._err].join("|");
+    const sig = [st?.last_updated, hass.user?.id, cfLang(hass), this._selected, this._confirm, this._err].join("|");
     if (sig !== this._sig) { this._sig = sig; this._render(); }
   }
 
-  select(gameId) { this._selected = gameId || null; this._confirm = false; this._sig = null; this._render(); this.dispatchEvent(new CustomEvent("fpr-select", { detail: this._selected })); }
+  select(gameId) { this._selected = gameId || null; this._confirm = false; this._sig = null; this._render(); this.dispatchEvent(new CustomEvent("cf-select", { detail: this._selected })); }
 
   _t(key, vars = {}) {
-    const s = (FPR_T[fprLang(this._hass)] || FPR_T.en)[key] || key;
+    const s = (CF_T[cfLang(this._hass)] || CF_T.en)[key] || key;
     return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
   }
 
@@ -147,14 +151,14 @@ class FireParadCard extends HTMLElement {
     const st = this._hass?.states[this._config.entity];
     if (!st) return null;
     const a = st.attributes;
-    const players = (a.players || []).map((p, i) => ({ ...p, color: FPR_COLORS[i % FPR_COLORS.length] }));
+    const players = (a.players || []).map((p, i) => ({ ...p, color: CF_COLORS[i % CF_COLORS.length] }));
     const by = Object.fromEntries(players.map((p) => [p.person, p]));
     const me = players.find((p) => p.user_id && p.user_id === this._hass.user?.id)?.person || null;
     const pairs = [];
     for (let i = 0; i < players.length; i++)
       for (let j = i + 1; j < players.length; j++) {
         const [p1, p2] = [players[i].person, players[j].person].sort();
-        const id = fprGameId(p1, p2);
+        const id = cfGameId(p1, p2);
         pairs.push({ id, game: { p1, p2, status: "none", wins1: 0, wins2: 0, draws: 0, ...(a.games || {})[id] } });
       }
     return { players, by, me, pairs, total: a.total || 0, last: a.last_result || "" };
@@ -163,8 +167,8 @@ class FireParadCard extends HTMLElement {
   _name(m, person) { return m.by[person]?.name || person; }
   _avatar(m, person, small = false) {
     const p = m.by[person] || {};
-    const style = p.picture ? `background-image:url('${fprEsc(p.picture)}')` : `background:${p.color || "#888"}`;
-    return `<span class="av${small ? " sm" : ""}" style="${style}">${p.picture ? "" : fprEsc((p.name || "?")[0])}</span>`;
+    const style = p.picture ? `background-image:url('${cfEsc(p.picture)}')` : `background:${p.color || "#888"}`;
+    return `<span class="av${small ? " sm" : ""}" style="${style}">${p.picture ? "" : cfEsc((p.name || "?")[0])}</span>`;
   }
   _dot(game, person) { return `<span class="dot ${person === game.p1 ? "r" : "y"}"></span>`; }
   _active(g) { return g.status === "playing" ? (g.turn === 1 ? g.p1 : g.p2) : null; }
@@ -175,16 +179,16 @@ class FireParadCard extends HTMLElement {
     if (!this.shadowRoot || !this._config || !this._hass) return;
     const m = this._model();
     let body;
-    if (!m) body = `<ha-card><div class="muted">${this._t("not_found", { e: fprEsc(this._config.entity) })}</div></ha-card>`;
+    if (!m) body = `<ha-card><div class="muted">${this._t("not_found", { e: cfEsc(this._config.entity) })}</div></ha-card>`;
     else if (this._config.mode === "summary") body = this._renderSummary(m);
     else if (this._config.mode === "status") body = this._renderStatus(m);
-    else body = `<ha-card>${this._selected ? this._renderGame(m) : this._renderLobby(m)}${this._err ? `<div class="err">${fprEsc(this._err)}</div>` : ""}</ha-card>`;
-    this.shadowRoot.innerHTML = `<style>${FPR_CSS}</style>${body}`;
+    else body = `<ha-card>${this._selected ? this._renderGame(m) : this._renderLobby(m)}${this._err ? `<div class="err">${cfEsc(this._err)}</div>` : ""}</ha-card>`;
+    this.shadowRoot.innerHTML = `<style>${CF_CSS}</style>${body}`;
   }
 
   // ---- lobby -----------------------------------------------------------
   _renderLobby(m) {
-    let html = `<h2>🔴🟡 ${fprEsc(this._config.title || this._t("title"))}</h2>`;
+    let html = `<h2>🔴🟡 ${cfEsc(this._config.title || this._t("title"))}</h2>`;
     if (m.me) {
       html += `<h3>${this._t("your_games")}</h3>`;
       for (const { id, game } of m.pairs.filter((x) => x.game.p1 === m.me || x.game.p2 === m.me)) html += this._opponentTile(m, id, game);
@@ -200,7 +204,7 @@ class FireParadCard extends HTMLElement {
 
   _opponentTile(m, id, g) {
     const opp = g.p1 === m.me ? g.p2 : g.p1;
-    const n = fprEsc(this._name(m, opp));
+    const n = cfEsc(this._name(m, opp));
     const mine = g.p1 === m.me ? g.wins1 : g.wins2, theirs = g.p1 === m.me ? g.wins2 : g.wins1;
     let t, u, hot = false;
     if (g.status === "playing") {
@@ -213,22 +217,22 @@ class FireParadCard extends HTMLElement {
       u = this._t("tap_new");
     } else { t = `⚔️ ${this._t("challenge", { n })}`; u = this._t("tap_start"); }
     const series = mine + theirs + (g.draws || 0) ? `${this._t("you")} ${mine} – ${theirs} ${n}${g.draws ? ` · ${this._t("draws", { d: g.draws })}` : ""}` : this._t("no_games_yet");
-    return `<div class="tile${hot ? " hot" : ""}" data-action="open" data-game="${id}" data-opp="${fprEsc(opp)}">${this._avatar(m, opp)}<div><div class="t1">${t}</div><div class="muted">${u} · ${series}</div></div></div>`;
+    return `<div class="tile${hot ? " hot" : ""}" data-action="open" data-game="${id}" data-opp="${cfEsc(opp)}">${this._avatar(m, opp)}<div><div class="t1">${t}</div><div class="muted">${u} · ${series}</div></div></div>`;
   }
 
   _pairTile(m, id, g) {
     const a = this._active(g);
     let u;
-    if (g.status === "playing") u = `${this._dot(g, a)} <b>${fprEsc(this._t("turn_of", { n: this._name(m, a) }))}</b> · ${this._ago(g.updated)}`;
-    else if (g.status === "finished") { const w = this._winner(g); u = w ? `🏆 ${fprEsc(this._t("won", { n: this._name(m, w) }))} · ${this._t("tap_new")}` : `🤝 ${this._t("draw")} · ${this._t("tap_new")}`; }
+    if (g.status === "playing") u = `${this._dot(g, a)} <b>${cfEsc(this._t("turn_of", { n: this._name(m, a) }))}</b> · ${this._ago(g.updated)}`;
+    else if (g.status === "finished") { const w = this._winner(g); u = w ? `🏆 ${cfEsc(this._t("won", { n: this._name(m, w) }))} · ${this._t("tap_new")}` : `🤝 ${this._t("draw")} · ${this._t("tap_new")}`; }
     else u = this._t("tap_start");
-    return `<div class="tile" data-action="open" data-game="${id}"><div><div class="t1">${this._dot(g, g.p1)} ${fprEsc(this._name(m, g.p1))} <span class="muted">${g.wins1} – ${g.wins2}</span> ${fprEsc(this._name(m, g.p2))} ${this._dot(g, g.p2)}</div><div class="muted">${u}</div></div></div>`;
+    return `<div class="tile" data-action="open" data-game="${id}"><div><div class="t1">${this._dot(g, g.p1)} ${cfEsc(this._name(m, g.p1))} <span class="muted">${g.wins1} – ${g.wins2}</span> ${cfEsc(this._name(m, g.p2))} ${this._dot(g, g.p2)}</div><div class="muted">${u}</div></div></div>`;
   }
 
   _scoreboard(m) {
     const rows = [...m.players].sort((a, b) => b.points - a.points || b.wins - a.wins || a.losses - b.losses);
     const medal = ["🥇", "🥈", "🥉"];
-    const tr = rows.map((p, i) => `<tr${i === 0 && p.points > 0 ? ' class="lead"' : ""}><td>${medal[i] || i + 1 + "."}</td><td class="n">${this._avatar(m, p.person, true)}${fprEsc(p.name)}</td><td>${p.played}</td><td>${p.wins}</td><td>${p.draws}</td><td>${p.losses}</td><td>${p.played ? Math.round((100 * p.wins) / p.played) : 0}%</td><td class="p">${p.points}</td></tr>`).join("");
+    const tr = rows.map((p, i) => `<tr${i === 0 && p.points > 0 ? ' class="lead"' : ""}><td>${medal[i] || i + 1 + "."}</td><td class="n">${this._avatar(m, p.person, true)}${cfEsc(p.name)}</td><td>${p.played}</td><td>${p.wins}</td><td>${p.draws}</td><td>${p.losses}</td><td>${p.played ? Math.round((100 * p.wins) / p.played) : 0}%</td><td class="p">${p.points}</td></tr>`).join("");
     return `<table><tr><th></th><th class="n">${this._t("player")}</th><th>${this._t("games")}</th><th>${this._t("w")}</th><th>${this._t("d")}</th><th>${this._t("l")}</th><th>${this._t("pct")}</th><th>${this._t("points")}</th></tr>${tr}</table><div class="muted" style="text-align:right;margin-top:6px">${this._t("games_total", { n: m.total })}</div>`;
   }
 
@@ -242,15 +246,15 @@ class FireParadCard extends HTMLElement {
     const opp = m.me === g.p1 ? g.p2 : g.p1;
     let big, sub;
     if (g.status === "playing") {
-      if (active === m.me) { big = `🎯 ${this._t("your_turn")}`; sub = this._t("you_are", { d: this._dot(g, m.me), n: fprEsc(this._name(m, opp)) }); }
-      else if (inGame) { big = `⏳ ${fprEsc(this._t("turn_of", { n: this._name(m, active) }))}`; sub = this._t("push_info"); }
-      else { big = `${this._dot(g, active)} ${fprEsc(this._t("turn_of", { n: this._name(m, active) }))}`; sub = this._t("last_move", { t: this._ago(g.updated) }); }
+      if (active === m.me) { big = `🎯 ${this._t("your_turn")}`; sub = this._t("you_are", { d: this._dot(g, m.me), n: cfEsc(this._name(m, opp)) }); }
+      else if (inGame) { big = `⏳ ${cfEsc(this._t("turn_of", { n: this._name(m, active) }))}`; sub = this._t("push_info"); }
+      else { big = `${this._dot(g, active)} ${cfEsc(this._t("turn_of", { n: this._name(m, active) }))}`; sub = this._t("last_move", { t: this._ago(g.updated) }); }
     } else if (g.status === "finished") {
       const w = this._winner(g);
-      big = !w ? `🤝 ${this._t("draw")}` : w === m.me ? `🏆 ${this._t("you_won")}` : inGame ? `😅 ${fprEsc(this._t("they_won", { n: this._name(m, w) }))}` : `🏆 ${fprEsc(this._t("won", { n: this._name(m, w) }))}`;
+      big = !w ? `🤝 ${this._t("draw")}` : w === m.me ? `🏆 ${this._t("you_won")}` : inGame ? `😅 ${cfEsc(this._t("they_won", { n: this._name(m, w) }))}` : `🏆 ${cfEsc(this._t("won", { n: this._name(m, w) }))}`;
       sub = "";
     } else { big = `🎮 ${this._t("no_game")}`; sub = ""; }
-    const series = `${this._t("series")}: ${this._dot(g, g.p1)} ${fprEsc(this._name(m, g.p1))} <b>${g.wins1}</b> – <b>${g.wins2}</b> ${fprEsc(this._name(m, g.p2))} ${this._dot(g, g.p2)}${g.draws ? ` · ${this._t("draws", { d: g.draws })}` : ""}`;
+    const series = `${this._t("series")}: ${this._dot(g, g.p1)} ${cfEsc(this._name(m, g.p1))} <b>${g.wins1}</b> – <b>${g.wins2}</b> ${cfEsc(this._name(m, g.p2))} ${this._dot(g, g.p2)}${g.draws ? ` · ${this._t("draws", { d: g.draws })}` : ""}`;
 
     const board = g.board && g.board.length === 42 ? g.board : ".".repeat(42);
     const win = g.win || [];
@@ -278,7 +282,7 @@ class FireParadCard extends HTMLElement {
         : `<button class="btn stop" data-action="resign">🏳️ ${this._t("resign")}</button>`;
     } else actions = `<button class="btn go" data-action="start" data-game="${id}">▶ ${this._t(g.status === "finished" ? "new_round" : "start")}</button>`;
 
-    return `<div class="back" data-action="back">← ${this._t("back")}</div>
+    return `<button class="back" data-action="back"><ha-icon icon="mdi:view-grid"></ha-icon>${this._t("back")}</button>
       <div class="status"><div class="big">${big}</div>${sub ? `<div class="muted">${sub}</div>` : ""}<div class="series">${series}</div></div>
       <div class="board">${cols}</div><div class="actions">${actions}</div>`;
   }
@@ -298,25 +302,25 @@ class FireParadCard extends HTMLElement {
       const n = m.pairs.filter((x) => x.game.status === "playing").length;
       t = n ? `🎮 ${n}` : `⚔️ ${this._t("none_active")}`; u = this._t("tap_start");
     }
-    return `<ha-card style="${hot ? "box-shadow:0 0 0 2px #66bb6a,0 0 18px rgba(102,187,106,.6)" : ""}"><div class="summary" data-action="nav"><div class="icon">🎮</div><div><div class="kicker">${fprEsc(this._config.title || this._t("title"))}</div><div class="t1">${fprEsc(t)}</div><div class="muted">${fprEsc(u)}</div></div></div></ha-card>`;
+    return `<ha-card style="${hot ? "box-shadow:0 0 0 2px #66bb6a,0 0 18px rgba(102,187,106,.6)" : ""}"><div class="summary" data-action="nav"><div class="icon">🎮</div><div><div class="kicker">${cfEsc(this._config.title || this._t("title"))}</div><div class="t1">${cfEsc(t)}</div><div class="muted">${cfEsc(u)}</div></div></div></ha-card>`;
   }
 
   _renderStatus(m) {
     const lines = m.pairs.map((x) => x.game).filter((g) => g.status === "playing").map((g) => {
       const a = this._active(g), o = a === g.p1 ? g.p2 : g.p1;
-      return `${this._dot(g, a)} ${fprEsc(this._t("turn_vs", { n: this._name(m, a), o: this._name(m, o) }))}`;
+      return `${this._dot(g, a)} ${cfEsc(this._t("turn_vs", { n: this._name(m, a), o: this._name(m, o) }))}`;
     });
     const sorted = [...m.players].sort((a, b) => b.points - a.points);
     const top = sorted.filter((p) => p.points > 0 && p.points === sorted[0].points);
-    const leader = top.length === 1 ? this._t("leader", { n: fprEsc(top[0].name), p: top[0].points }) : top.length > 1 ? this._t("shared_lead", { n: fprEsc(this._list(top.map((p) => p.name))), p: top[0].points }) : "";
-    const glass = this._config.glass !== false;
-    return `<ha-card class="${glass ? "glass" : ""}" style="${glass ? "background:rgba(0,0,0,.6)" : ""}"><div style="font-weight:700;font-size:1.1em;margin-bottom:4px">🎮 ${fprEsc(this._config.title || this._t("title"))}</div><div style="line-height:1.6;font-weight:600">${lines.length ? lines.join("<br>") : `<span class="muted">${this._t("none_active")}</span>`}</div>${leader ? `<div style="margin-top:6px;color:#ffd54f;font-weight:600">${leader}</div>` : ""}</ha-card>`;
+    const leader = top.length === 1 ? this._t("leader", { n: cfEsc(top[0].name), p: top[0].points }) : top.length > 1 ? this._t("shared_lead", { n: cfEsc(this._list(top.map((p) => p.name))), p: top[0].points }) : "";
+    const glass = this._config.glass === true;
+    return `<ha-card class="${glass ? "glass" : ""}" style="${glass ? "background:rgba(0,0,0,.6)" : ""}"><div style="font-weight:700;font-size:1.1em;margin-bottom:4px">🎮 ${cfEsc(this._config.title || this._t("title"))}</div><div style="line-height:1.6;font-weight:600">${lines.length ? lines.join("<br>") : `<span class="muted">${this._t("none_active")}</span>`}</div>${leader ? `<div style="margin-top:6px;color:#ffd54f;font-weight:600">${leader}</div>` : ""}</ha-card>`;
   }
 
   // ---- actions ---------------------------------------------------------------
   async _call(service, data) {
     try {
-      return await this._hass.callWS({ type: "call_service", domain: "fire_pa_rad", service, service_data: data, return_response: service === "start" });
+      return await this._hass.callWS({ type: "call_service", domain: "connect_four", service, service_data: data, return_response: service === "start" });
     } catch (e) {
       this._err = e?.message || String(e);
       this._sig = null; this._render();
@@ -330,7 +334,7 @@ class FireParadCard extends HTMLElement {
     if (!el) return;
     const m = this._model();
     const action = el.dataset.action;
-    if (action === "nav") return fprNavigate(this._config.navigation_path);
+    if (action === "nav") return cfNavigate(this._config.navigation_path);
     if (action === "back") return this.select(null);
     if (action === "open") {
       const pair = m.pairs.find((x) => x.id === el.dataset.game);
@@ -347,7 +351,7 @@ class FireParadCard extends HTMLElement {
   }
 }
 
-class FireParadPanel extends HTMLElement {
+class ConnectFourPanel extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (!this._card) this._build();
@@ -373,14 +377,14 @@ class FireParadPanel extends HTMLElement {
       :host { display:block; min-height:100vh; background: var(--primary-background-color); color: var(--primary-text-color); }
       .bar { display:flex; align-items:center; gap:8px; height:56px; padding:0 8px; background: var(--app-header-background-color, var(--primary-color)); color: var(--app-header-text-color, #fff); font-size:20px; }
       .wrap { max-width: 620px; margin: 0 auto; padding: 12px; }
-    </style><div class="bar"><span id="menu"></span><span>${fprEsc(this._panel?.title || FPR_T[fprLang(this._hass)].title)}</span></div><div class="wrap"></div>`;
+    </style><div class="bar"><span id="menu"></span><span>${cfEsc(this._panel?.title || CF_T[cfLang(this._hass)].title)}</span></div><div class="wrap"></div>`;
     this._menu = document.createElement("ha-menu-button");
     this._menu.hass = this._hass;
     this._menu.narrow = this._narrow;
     root.getElementById("menu").appendChild(this._menu);
-    this._card = document.createElement("fire-pa-rad-card");
+    this._card = document.createElement("connect-four-card");
     this._card.setConfig({ mode: "full" });
-    this._card.addEventListener("fpr-select", (ev) => {
+    this._card.addEventListener("cf-select", (ev) => {
       const url = new URL(location.href);
       if (ev.detail) url.searchParams.set("game", ev.detail); else url.searchParams.delete("game");
       history.replaceState(null, "", url.pathname + url.search);
@@ -390,15 +394,15 @@ class FireParadPanel extends HTMLElement {
   }
 
   _readLocation() {
-    if (!this._card || !location.pathname.startsWith("/fire-pa-rad")) return;
+    if (!this._card || !location.pathname.startsWith("/connect-four")) return;
     const game = new URLSearchParams(location.search).get("game");
     if ((game || null) !== (this._card._selected || null)) this._card.select(game);
   }
 }
 
-if (!customElements.get("fire-pa-rad-card")) customElements.define("fire-pa-rad-card", FireParadCard);
-if (!customElements.get("fire-pa-rad-panel")) customElements.define("fire-pa-rad-panel", FireParadPanel);
+if (!customElements.get("connect-four-card")) customElements.define("connect-four-card", ConnectFourCard);
+if (!customElements.get("connect-four-panel")) customElements.define("connect-four-panel", ConnectFourPanel);
 window.customCards = window.customCards || [];
-if (!window.customCards.some((c) => c.type === "fire-pa-rad-card"))
-  window.customCards.push({ type: "fire-pa-rad-card", name: "4 på rad", description: "Connect Four for the family (modes: full, summary, status)", preview: false });
-console.info(`%c 4 PÅ RAD %c ${FPR_VERSION} `, "background:#e53935;color:#fff;font-weight:700", "background:#fdd835;color:#000;font-weight:700");
+if (!window.customCards.some((c) => c.type === "connect-four-card"))
+  window.customCards.push({ type: "connect-four-card", name: "Connect Four", description: "Connect Four for the family (modes: full, summary, status)", preview: false });
+console.info(`%c CONNECT FOUR %c ${CF_VERSION} `, "background:#e53935;color:#fff;font-weight:700", "background:#fdd835;color:#000;font-weight:700");

@@ -79,7 +79,7 @@
       "name": "Legg brikke",
       "description": "Slipp brikken til den som har tur i en kolonne.",
       "fields": {
-        "game_id": { "name": "Parti", "description": "Parti-id, f.eks. adrian_johnsen__gisle_johnsen." },
+        "game_id": { "name": "Parti", "description": "Parti-id, f.eks. player1__player2." },
         "column": { "name": "Kolonne", "description": "Kolonne 0–6, fra venstre." }
       }
     },

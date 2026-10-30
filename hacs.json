@@ -1,5 +1,5 @@
 {
-  "name": "4 på rad (Connect Four)",
+  "name": "Connect Four",
   "render_readme": true,
   "homeassistant": "2025.4.0"
 }

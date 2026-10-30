@@ -1,9 +1,12 @@
-"""Constants for 4 på rad."""
+"""Constants for Connect Four."""
 
 from __future__ import annotations
 
-DOMAIN = "fire_pa_rad"
-VERSION = "0.1.2"
+DOMAIN = "connect_four"
+# Earlier versions of this integration used this domain; its games and settings are imported once.
+LEGACY_DOMAIN = "fire_pa_rad"
+LEGACY_STATIC_URL = "/fire_pa_rad_static"
+VERSION = "0.2.0"
 
 CONF_PLAYERS = "players"
 CONF_NOTIFY = "notify_services"
@@ -20,12 +23,12 @@ DEFAULT_LIGHTNING_BONUS = 1
 
 NO_NOTIFY = "none"
 
-STATIC_URL = "/fire_pa_rad_static"
-FRONTEND_FILE = "fire-pa-rad.js"
-PANEL_URL_PATH = "fire-pa-rad"
-PANEL_ELEMENT = "fire-pa-rad-panel"
+STATIC_URL = "/connect_four_static"
+FRONTEND_FILE = "connect-four.js"
+PANEL_URL_PATH = "connect-four"
+PANEL_ELEMENT = "connect-four-panel"
 
-SUMMARY_ENTITY_ID = "sensor.fire_pa_rad"
+SUMMARY_ENTITY_ID = "sensor.connect_four"
 
 STATUS_NONE = "none"
 STATUS_PLAYING = "playing"

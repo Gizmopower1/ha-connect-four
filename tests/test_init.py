@@ -11,17 +11,17 @@ from homeassistant.core import Context, HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
 
-from custom_components.fire_pa_rad.const import CONF_NOTIFY, CONF_PLAYERS, DOMAIN, NO_NOTIFY
+from custom_components.connect_four.const import CONF_NOTIFY, CONF_PLAYERS, DOMAIN, NO_NOTIFY
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_mock_service
 
-A, B, C = "person.anna", "person.bjorn", "person.cecilie"
-GAME_AB = "anna__bjorn"
+A, B, C = "person.player1", "person.player2", "person.player3"
+GAME_AB = "player1__player2"
 
 
 async def setup_entry(hass: HomeAssistant, notify: dict | None = None) -> MockConfigEntry:
     entry = MockConfigEntry(
-        domain=DOMAIN, title="4 på rad", data={},
+        domain=DOMAIN, title="Connect Four", data={},
         options={CONF_PLAYERS: [A, B, C], CONF_NOTIFY: notify or {A: NO_NOTIFY, B: NO_NOTIFY, C: NO_NOTIFY}},
     )
     entry.add_to_hass(hass)
@@ -39,7 +39,7 @@ async def call(hass, service, data, user=None):
 
 
 def summary(hass):
-    return hass.states.get("sensor.fire_pa_rad").attributes
+    return hass.states.get("sensor.connect_four").attributes
 
 
 async def test_config_flow(hass, persons, frontend_mocks):
@@ -49,13 +49,13 @@ async def test_config_flow(hass, persons, frontend_mocks):
     assert result["errors"] == {"base": "min_players"}
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_PLAYERS: [A, B], "show_panel": True, "points_win": 3, "points_draw": 1, "lightning_moves": 7, "lightning_bonus": 1})
     assert result["step_id"] == "notify"
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"Anna Test": NO_NOTIFY, "Bjørn Test": NO_NOTIFY})
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"Player1": NO_NOTIFY, "Player2": NO_NOTIFY})
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["options"][CONF_PLAYERS] == [A, B]
     assert result["options"][CONF_NOTIFY] == {A: NO_NOTIFY, B: NO_NOTIFY}
     await hass.async_block_till_done()
-    assert hass.states.get("sensor.fire_pa_rad") is not None
-    assert hass.states.get("sensor.fire_pa_rad_anna").state == "0"
+    assert hass.states.get("sensor.connect_four") is not None
+    assert hass.states.get("sensor.connect_four_player1").state == "0"
     frontend_mocks["panel"].assert_called_once()
 
 
@@ -67,55 +67,55 @@ async def play(hass, game_id, columns, users):
 
 
 async def test_full_game_scoring_and_rules(hass, persons, frontend_mocks):
-    notify = async_mock_service(hass, "notify", "mobile_app_bjorn")
-    await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_bjorn", C: NO_NOTIFY})
-    users = {A: "user-anna", B: "user-bjorn", C: "user-cecilie"}
+    notify = async_mock_service(hass, "notify", "mobile_app_player2")
+    await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_player2", C: NO_NOTIFY})
+    users = {A: "user-player1", B: "user-player2", C: "user-player3"}
 
-    with patch("custom_components.fire_pa_rad.manager.random.choice", return_value=1):
-        response = await call(hass, "start", {"opponent": B}, "user-anna")
+    with patch("custom_components.connect_four.manager.random.choice", return_value=1):
+        response = await call(hass, "start", {"opponent": B}, "user-player1")
     assert response == {"game_id": GAME_AB}
-    assert notify[-1].data["message"].startswith("Anna")
-    assert hass.states.get("sensor.fire_pa_rad").state == "1"
+    assert notify[-1].data["message"].startswith("Player1")
+    assert hass.states.get("sensor.connect_four").state == "1"
 
-    # Bjørn may not move on Anna's turn, Cecilie may not touch their game.
+    # Player2 may not move on Player1's turn, Player3 may not touch their game.
     with pytest.raises(ServiceValidationError):
-        await call(hass, "drop", {"game_id": GAME_AB, "column": 0}, "user-bjorn")
+        await call(hass, "drop", {"game_id": GAME_AB, "column": 0}, "user-player2")
     with pytest.raises(ServiceValidationError):
-        await call(hass, "drop", {"game_id": GAME_AB, "column": 0}, "user-cecilie")
+        await call(hass, "drop", {"game_id": GAME_AB, "column": 0}, "user-player3")
 
-    # Anna (R) stacks column 3, Bjørn column 4 -> Anna wins vertically in 4 moves (lightning bonus).
+    # Player1 (R) stacks column 3, Player2 column 4 -> Player1 wins vertically in 4 moves (lightning bonus).
     await play(hass, GAME_AB, [3, 4, 3, 4, 3, 4, 3], users)
     game = summary(hass)["games"][GAME_AB]
     assert game["status"] == "finished"
     assert game["result"] == "1" and game["wins1"] == 1
     assert game["win"] == [17, 24, 31, 38]
-    assert hass.states.get("sensor.fire_pa_rad_anna").state == "4"
-    assert hass.states.get("sensor.fire_pa_rad_bjorn").attributes["losses"] == 1
+    assert hass.states.get("sensor.connect_four_player1").state == "4"
+    assert hass.states.get("sensor.connect_four_player2").attributes["losses"] == 1
     assert summary(hass)["total"] == 1
 
     # A shared tablet (no player user) may start for a pair and play; the series is kept.
-    with patch("custom_components.fire_pa_rad.manager.random.choice", return_value=2):
+    with patch("custom_components.connect_four.manager.random.choice", return_value=2):
         await call(hass, "start", {"player": A, "opponent": B}, "user-tablet")
     await call(hass, "drop", {"game_id": GAME_AB, "column": 0}, "user-tablet")
     await call(hass, "drop", {"game_id": GAME_AB, "column": 0}, None)
-    # Bjørn resigns from his phone even though it is his turn or not.
-    await call(hass, "resign", {"game_id": GAME_AB}, "user-bjorn")
+    # Player2 resigns from their phone, whether or not it is their turn.
+    await call(hass, "resign", {"game_id": GAME_AB}, "user-player2")
     game = summary(hass)["games"][GAME_AB]
     assert game["status"] == "finished" and game["wins1"] == 2 and game["result"] == "1"
-    assert hass.states.get("sensor.fire_pa_rad_anna").state == "7"
+    assert hass.states.get("sensor.connect_four_player1").state == "7"
 
 
 async def test_cancel_and_full_column(hass, persons, frontend_mocks):
     await setup_entry(hass)
-    with patch("custom_components.fire_pa_rad.manager.random.choice", return_value=1):
-        await call(hass, "start", {"opponent": C}, "user-bjorn")
-    gid = "bjorn__cecilie"
-    await call(hass, "resign", {"game_id": gid}, "user-cecilie")
+    with patch("custom_components.connect_four.manager.random.choice", return_value=1):
+        await call(hass, "start", {"opponent": C}, "user-player2")
+    gid = "player2__player3"
+    await call(hass, "resign", {"game_id": gid}, "user-player3")
     assert summary(hass)["games"][gid]["status"] == "none"
     assert summary(hass)["total"] == 0
 
-    with patch("custom_components.fire_pa_rad.manager.random.choice", return_value=1):
-        await call(hass, "start", {"opponent": C}, "user-bjorn")
+    with patch("custom_components.connect_four.manager.random.choice", return_value=1):
+        await call(hass, "start", {"opponent": C}, "user-player2")
     for _ in range(6):
         await call(hass, "drop", {"game_id": gid, "column": 0})
     with pytest.raises(ServiceValidationError):
@@ -124,9 +124,9 @@ async def test_cancel_and_full_column(hass, persons, frontend_mocks):
 
 async def test_draw(hass, persons, frontend_mocks):
     await setup_entry(hass)
-    with patch("custom_components.fire_pa_rad.manager.random.choice", return_value=1):
+    with patch("custom_components.connect_four.manager.random.choice", return_value=1):
         await call(hass, "start", {"player": A, "opponent": C})
-    gid = "anna__cecilie"
+    gid = "player1__player3"
     # Column order that fills the board without four in a row.
     order = [0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0,
              2, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 2,
@@ -136,16 +136,36 @@ async def test_draw(hass, persons, frontend_mocks):
         await call(hass, "drop", {"game_id": gid, "column": col})
     game = summary(hass)["games"][gid]
     assert game["status"] == "finished" and game["result"] == "draw" and game["draws"] == 1
-    assert hass.states.get("sensor.fire_pa_rad_anna").state == "1"
-    assert hass.states.get("sensor.fire_pa_rad_cecilie").state == "1"
+    assert hass.states.get("sensor.connect_four_player1").state == "1"
+    assert hass.states.get("sensor.connect_four_player3").state == "1"
 
 
 async def test_notifications_switch_and_reset(hass, persons, frontend_mocks):
-    notify = async_mock_service(hass, "notify", "mobile_app_bjorn")
-    await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_bjorn", C: NO_NOTIFY})
+    notify = async_mock_service(hass, "notify", "mobile_app_player2")
+    await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_player2", C: NO_NOTIFY})
     switch = next(s.entity_id for s in hass.states.async_all("switch"))
     await hass.services.async_call("switch", "turn_off", {"entity_id": switch}, blocking=True)
-    await call(hass, "start", {"opponent": B}, "user-anna")
+    await call(hass, "start", {"opponent": B}, "user-player1")
     assert notify == []
     await hass.services.async_call(DOMAIN, "reset_scores", {}, blocking=True)
     assert summary(hass)["games"] == {}
+
+
+async def test_imports_legacy_games_and_settings(hass, persons, frontend_mocks):
+    """Games, scores and settings from the earlier fire_pa_rad integration carry over."""
+    from homeassistant.helpers.storage import Store
+
+    legacy = MockConfigEntry(domain="fire_pa_rad", options={CONF_PLAYERS: [A, B], CONF_NOTIFY: {A: NO_NOTIFY, B: NO_NOTIFY}})
+    legacy.add_to_hass(hass)
+    stats = {A: {"wins": 2, "draws": 0, "losses": 0, "points": 7}, B: {"wins": 0, "draws": 0, "losses": 2, "points": 0}}
+    game = {"p1": A, "p2": B, "wins1": 2, "wins2": 0, "draws": 0, "status": "finished", "turn": 1, "board": "." * 42}
+    await Store(hass, 1, f"fire_pa_rad.{legacy.entry_id}").async_save({"games": {GAME_AB: game}, "stats": stats, "total": 2, "last_result": "", "notify": True})
+
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+    schema = result["data_schema"].schema
+    assert next(k for k in schema if k == CONF_PLAYERS).default() == [A, B]
+
+    await setup_entry(hass)
+    assert hass.states.get("sensor.connect_four_player1").state == "7"
+    assert summary(hass)["games"][GAME_AB]["wins1"] == 2
+    assert summary(hass)["total"] == 2

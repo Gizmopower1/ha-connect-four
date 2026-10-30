@@ -1,0 +1,13 @@
+# A dashboard view with the full game (main menu, boards and scoreboard).
+# Only needed if you want the game on a dashboard as well as in the sidebar.
+title: Connect Four
+path: connect-four-game
+icon: mdi:circle-multiple
+type: sections
+sections:
+  - type: grid
+    cards:
+      - type: custom:connect-four-card
+        mode: full
+        grid_options:
+          columns: full

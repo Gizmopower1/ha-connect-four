@@ -8,27 +8,27 @@ from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import FireParadConfigEntry
+from . import ConnectFourConfigEntry
 from .const import STATUS_PLAYING, SUMMARY_ENTITY_ID
-from .entity import FireParadEntity
-from .manager import FireParadManager
+from .entity import ConnectFourEntity
+from .manager import ConnectFourManager
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: FireParadConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
+async def async_setup_entry(hass: HomeAssistant, entry: ConnectFourConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
     manager = entry.runtime_data
-    entities: list[SensorEntity] = [FireParadSummarySensor(manager)]
-    entities += [FireParadPointsSensor(manager, person) for person in manager.players]
+    entities: list[SensorEntity] = [ConnectFourSummarySensor(manager)]
+    entities += [ConnectFourPointsSensor(manager, person) for person in manager.players]
     async_add_entities(entities)
 
 
-class FireParadSummarySensor(FireParadEntity, SensorEntity):
+class ConnectFourSummarySensor(ConnectFourEntity, SensorEntity):
     """Number of games in progress; attributes carry everything the card needs."""
 
     _attr_translation_key = "games"
     _attr_icon = "mdi:circle-multiple"
     _unrecorded_attributes = frozenset({"games", "players", "last_result"})
 
-    def __init__(self, manager: FireParadManager) -> None:
+    def __init__(self, manager: ConnectFourManager) -> None:
         super().__init__(manager)
         self._attr_unique_id = f"{manager.entry.entry_id}_games"
         self.entity_id = SUMMARY_ENTITY_ID
@@ -42,20 +42,20 @@ class FireParadSummarySensor(FireParadEntity, SensorEntity):
         return self.manager.export()
 
 
-class FireParadPointsSensor(FireParadEntity, SensorEntity):
+class ConnectFourPointsSensor(ConnectFourEntity, SensorEntity):
     """Total points for one player."""
 
     _attr_translation_key = "points"
     _attr_icon = "mdi:star-circle"
     _attr_state_class = SensorStateClass.TOTAL
 
-    def __init__(self, manager: FireParadManager, person: str) -> None:
+    def __init__(self, manager: ConnectFourManager, person: str) -> None:
         super().__init__(manager)
         self.person = person
         slug = person.split(".", 1)[1]
         self._attr_unique_id = f"{manager.entry.entry_id}_points_{slug}"
         self._attr_translation_placeholders = {"name": manager.name(person)}
-        self.entity_id = f"sensor.fire_pa_rad_{slug}"
+        self.entity_id = f"sensor.connect_four_{slug}"
 
     @property
     def native_value(self) -> int:

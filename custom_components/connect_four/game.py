@@ -1,4 +1,4 @@
-"""Pure game logic for 4 på rad (Connect Four). No Home Assistant imports."""
+"""Pure game logic for Connect Four. No Home Assistant imports."""
 
 from __future__ import annotations
 
