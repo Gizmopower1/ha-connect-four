@@ -50,82 +50,45 @@
   },
   "entity": {
     "sensor": {
-      "games": {
-        "name": "Games in progress"
-      },
-      "points": {
-        "name": "Points {name}"
-      }
+      "games": { "name": "Games in progress" },
+      "points": { "name": "Points {name}" }
     },
     "switch": {
-      "push": {
-        "name": "Push notifications {name}"
-      }
+      "push": { "name": "Push notifications {name}" }
     }
   },
   "exceptions": {
-    "not_loaded": {
-      "message": "Connect Four is not set up."
-    },
-    "unknown_game": {
-      "message": "Unknown game: {game_id}."
-    },
-    "invalid_players": {
-      "message": "Choose two different players who take part in Connect Four."
-    },
-    "not_playing": {
-      "message": "There is no game in progress."
-    },
-    "not_your_game": {
-      "message": "You can only play in your own games."
-    },
-    "not_your_turn": {
-      "message": "It is {name}'s turn."
-    },
-    "column_full": {
-      "message": "That column is full."
-    },
-    "not_your_settings": {
-      "message": "You can only change your own notifications."
-    }
+    "not_loaded": { "message": "Connect Four is not set up." },
+    "unknown_game": { "message": "Unknown game: {game_id}." },
+    "invalid_players": { "message": "Choose two different players who take part in Connect Four." },
+    "not_playing": { "message": "There is no game in progress." },
+    "not_your_game": { "message": "You can only play in your own games." },
+    "not_your_turn": { "message": "It is {name}'s turn." },
+    "column_full": { "message": "That column is full." },
+    "not_your_settings": { "message": "You can only change your own notifications." }
   },
   "services": {
     "start": {
       "name": "Start game",
       "description": "Start a new game (or a new round). When called by a logged-in player, that player challenges the opponent.",
       "fields": {
-        "opponent": {
-          "name": "Opponent",
-          "description": "The person to play against."
-        },
-        "player": {
-          "name": "Player",
-          "description": "Only needed when the caller is not a player (e.g. a shared tablet)."
-        }
+        "opponent": { "name": "Opponent", "description": "The person to play against." },
+        "player": { "name": "Player", "description": "Only needed when the caller is not a player (e.g. a shared tablet)." }
       }
     },
     "drop": {
       "name": "Drop piece",
       "description": "Drop the current player's piece in a column.",
       "fields": {
-        "game_id": {
-          "name": "Game",
-          "description": "Game id, e.g. player1__player2."
-        },
-        "column": {
-          "name": "Column",
-          "description": "Column 0–6, left to right."
-        }
+        "game_id": { "name": "Game", "description": "Game id, e.g. player1__player2." },
+        "column": { "name": "Column", "description": "Column 0–6, left to right." }
       }
     },
     "resign": {
       "name": "Resign",
       "description": "Give up the game. With fewer than two pieces played the game is cancelled without points.",
       "fields": {
-        "game_id": {
-          "name": "Game",
-          "description": "Game id."
-        }
+        "game_id": { "name": "Game", "description": "Game id." }
       }
     },
     "reset_scores": {
@@ -136,14 +99,8 @@
       "name": "Set notifications",
       "description": "Turn push notifications on or off. A logged-in player changes their own; otherwise name the player.",
       "fields": {
-        "enabled": {
-          "name": "Enabled",
-          "description": "Whether to send push notifications."
-        },
-        "player": {
-          "name": "Player",
-          "description": "Only needed when the caller is not a player (e.g. an admin)."
-        }
+        "enabled": { "name": "Enabled", "description": "Whether to send push notifications." },
+        "player": { "name": "Player", "description": "Only needed when the caller is not a player (e.g. an admin)." }
       }
     }
   }
