@@ -8,7 +8,7 @@ push notifications and its own sidebar entry.
 - **A "Connect Four" sidebar entry** with the main menu, the boards and the scoreboard.
 - **Players are picked from your Home Assistant persons**, so no YAML is needed.
 - **One game per pair of players.** You can play several opponents at once, and each pair keeps its own score ("You 3 – 1 Player2").
-- **Push notifications** when it is your turn ("Your turn against Player1! 🎯"). Tapping one opens the right board, and each player's phone is found automatically.
+- **Push notifications** when it is your turn ("Your turn against Player1! 🎯"). Tapping one opens the right board, and each player's phone is found automatically. Each player can turn their own notifications on or off with a switch in the main menu. They are on by default.
 - **Anti-cheat:** a player who is logged in can only move in their own games, and only on their turn.
   A shared user (for example a wall tablet) can play for everyone.
 - **Points:** win 3, lightning win +1 (≤ 7 own moves), draw 1, opponent resigned 3. You can change all of these.
@@ -57,9 +57,9 @@ Ready-to-use examples are in [`examples/`](examples):
 |---|---|
 | `sensor.connect_four` | Number of games in progress. The card reads its attributes |
 | `sensor.connect_four_<person>` | Points for each player, plus wins, draws and losses |
-| `switch.connect_four_push_notifications` | Turns push notifications on or off |
+| `switch.connect_four_push_<person>` | Turns push notifications on or off for one player |
 
-Actions: `connect_four.start`, `connect_four.drop`, `connect_four.resign`, and `connect_four.reset_scores` (admin only).
+Actions: `connect_four.start`, `connect_four.drop`, `connect_four.resign`, `connect_four.set_notifications`, and `connect_four.reset_scores` (admin only).
 
 ## Upgrading from `fire_pa_rad`
 Earlier versions of this integration were called `fire_pa_rad`. When you set up Connect Four, it picks up the

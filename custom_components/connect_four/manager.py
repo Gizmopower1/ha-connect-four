@@ -78,7 +78,7 @@ class ConnectFourManager:
         self.hass = hass
         self.entry = entry
         self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
-        self.data: dict[str, Any] = {"games": {}, "stats": {}, "total": 0, "last_result": "", "notify": True}
+        self.data: dict[str, Any] = {"games": {}, "stats": {}, "total": 0, "last_result": "", "push": {}}
         self._listeners: list[Callable[[], None]] = []
 
     async def async_load(self) -> None:
@@ -89,6 +89,9 @@ class ConnectFourManager:
             self.data.update(legacy)
             self._store.async_delay_save(lambda: self.data, 1)
             _LOGGER.info("Imported games and scores from %s", LEGACY_DOMAIN)
+        # Push used to be one switch for everyone; it is now per player and on by default.
+        self.data.pop("notify", None)
+        self.data.setdefault("push", {})
 
     async def _async_load_legacy(self) -> dict[str, Any] | None:
         """Return games and scores saved by the earlier fire_pa_rad integration, if any."""
@@ -125,13 +128,24 @@ class ConnectFourManager:
                 return state.entity_id
         return None
 
-    @property
-    def notify_enabled(self) -> bool:
-        return bool(self.data.get("notify", True))
+    def push_enabled(self, person: str) -> bool:
+        """Return whether a player gets push notifications (on unless turned off)."""
+        return bool(self.data["push"].get(person, True))
 
-    async def async_set_notify(self, enabled: bool) -> None:
-        self.data["notify"] = enabled
+    async def async_set_push(self, person: str, enabled: bool) -> None:
+        self.data["push"][person] = enabled
         self._changed()
+
+    async def async_set_push_for_caller(self, user_id: str | None, enabled: bool, player: str | None = None) -> None:
+        """A logged-in player may only change their own notifications; others must name the player."""
+        caller = self.person_for_user(user_id)
+        if caller in self.players:
+            if player not in (None, caller):
+                raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_your_settings")
+            player = caller
+        if player not in self.players:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_players")
+        await self.async_set_push(player, enabled)
 
     # --- listeners / persistence --------------------------------------
 
@@ -290,7 +304,7 @@ class ConnectFourManager:
         await self._notify_text(person, MESSAGES[self.lang][key].format(**fmt), game_id)
 
     async def _notify_text(self, person: str, message: str, game_id: str) -> None:
-        if not self.notify_enabled:
+        if not self.push_enabled(person):
             return
         service = self.entry.options.get(CONF_NOTIFY, {}).get(person, NO_NOTIFY)
         if not service or service == NO_NOTIFY or "." not in service:
@@ -319,6 +333,7 @@ class ConnectFourManager:
                 "person": person, "name": self.name(person),
                 "user_id": state.attributes.get("user_id") if state else None,
                 "picture": state.attributes.get("entity_picture") if state else None,
+                "push": self.push_enabled(person),
                 **s, "played": s["wins"] + s["draws"] + s["losses"],
             })
         games = {

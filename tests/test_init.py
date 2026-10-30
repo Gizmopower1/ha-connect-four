@@ -140,13 +140,26 @@ async def test_draw(hass, persons, frontend_mocks):
     assert hass.states.get("sensor.connect_four_player3").state == "1"
 
 
-async def test_notifications_switch_and_reset(hass, persons, frontend_mocks):
+async def test_push_per_player_and_reset(hass, persons, frontend_mocks):
     notify = async_mock_service(hass, "notify", "mobile_app_player2")
     await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_player2", C: NO_NOTIFY})
-    switch = next(s.entity_id for s in hass.states.async_all("switch"))
-    await hass.services.async_call("switch", "turn_off", {"entity_id": switch}, blocking=True)
+    assert hass.states.get("switch.connect_four_push_player2").state == "on"
+
+    # Player2 turns their own notifications off from the card.
+    await call(hass, "set_notifications", {"enabled": False}, "user-player2")
+    assert hass.states.get("switch.connect_four_push_player2").state == "off"
+    assert next(p for p in summary(hass)["players"] if p["person"] == B)["push"] is False
     await call(hass, "start", {"opponent": B}, "user-player1")
     assert notify == []
+
+    # Player1 may not change Player2's setting; the switch entity can.
+    with pytest.raises(ServiceValidationError):
+        await call(hass, "set_notifications", {"enabled": True, "player": B}, "user-player1")
+    await hass.services.async_call("switch", "turn_on", {"entity_id": "switch.connect_four_push_player2"}, blocking=True)
+    await call(hass, "resign", {"game_id": GAME_AB}, "user-player1")
+    await call(hass, "start", {"opponent": B}, "user-player1")
+    assert len(notify) == 1
+
     await hass.services.async_call(DOMAIN, "reset_scores", {}, blocking=True)
     assert summary(hass)["games"] == {}
 

@@ -50,49 +50,101 @@
   },
   "entity": {
     "sensor": {
-      "games": { "name": "Partier i gang" },
-      "points": { "name": "Poeng {name}" }
+      "games": {
+        "name": "Partier i gang"
+      },
+      "points": {
+        "name": "Poeng {name}"
+      }
     },
     "switch": {
-      "notifications": { "name": "Push-varsler" }
+      "push": {
+        "name": "Push-varsler {name}"
+      }
     }
   },
   "exceptions": {
-    "not_loaded": { "message": "4 på rad er ikke satt opp." },
-    "unknown_game": { "message": "Ukjent parti: {game_id}." },
-    "invalid_players": { "message": "Velg to forskjellige spillere som er med i 4 på rad." },
-    "not_playing": { "message": "Det er ikke noe parti i gang." },
-    "not_your_game": { "message": "Du kan bare spille i dine egne partier." },
-    "not_your_turn": { "message": "Det er {name} sin tur." },
-    "column_full": { "message": "Den kolonnen er full." }
+    "not_loaded": {
+      "message": "4 på rad er ikke satt opp."
+    },
+    "unknown_game": {
+      "message": "Ukjent parti: {game_id}."
+    },
+    "invalid_players": {
+      "message": "Velg to forskjellige spillere som er med i 4 på rad."
+    },
+    "not_playing": {
+      "message": "Det er ikke noe parti i gang."
+    },
+    "not_your_game": {
+      "message": "Du kan bare spille i dine egne partier."
+    },
+    "not_your_turn": {
+      "message": "Det er {name} sin tur."
+    },
+    "column_full": {
+      "message": "Den kolonnen er full."
+    },
+    "not_your_settings": {
+      "message": "Du kan bare endre dine egne varsler."
+    }
   },
   "services": {
     "start": {
       "name": "Start parti",
       "description": "Start et nytt parti (eller ny runde). Kalles det av en innlogget spiller, utfordrer den spilleren motstanderen.",
       "fields": {
-        "opponent": { "name": "Motstander", "description": "Personen det skal spilles mot." },
-        "player": { "name": "Spiller", "description": "Trengs bare når den som kaller ikke er spiller (f.eks. felles nettbrett)." }
+        "opponent": {
+          "name": "Motstander",
+          "description": "Personen det skal spilles mot."
+        },
+        "player": {
+          "name": "Spiller",
+          "description": "Trengs bare når den som kaller ikke er spiller (f.eks. felles nettbrett)."
+        }
       }
     },
     "drop": {
       "name": "Legg brikke",
       "description": "Slipp brikken til den som har tur i en kolonne.",
       "fields": {
-        "game_id": { "name": "Parti", "description": "Parti-id, f.eks. player1__player2." },
-        "column": { "name": "Kolonne", "description": "Kolonne 0–6, fra venstre." }
+        "game_id": {
+          "name": "Parti",
+          "description": "Parti-id, f.eks. player1__player2."
+        },
+        "column": {
+          "name": "Kolonne",
+          "description": "Kolonne 0–6, fra venstre."
+        }
       }
     },
     "resign": {
       "name": "Gi opp",
       "description": "Gi opp partiet. Med færre enn to brikker lagt avbrytes partiet uten poeng.",
       "fields": {
-        "game_id": { "name": "Parti", "description": "Parti-id." }
+        "game_id": {
+          "name": "Parti",
+          "description": "Parti-id."
+        }
       }
     },
     "reset_scores": {
       "name": "Nullstill poeng",
       "description": "Fjern alle partier, serier og poeng (kun admin)."
+    },
+    "set_notifications": {
+      "name": "Velg varsler",
+      "description": "Slå push-varsler av eller på. En innlogget spiller endrer sine egne; ellers må spilleren velges.",
+      "fields": {
+        "enabled": {
+          "name": "På",
+          "description": "Om det skal sendes push-varsler."
+        },
+        "player": {
+          "name": "Spiller",
+          "description": "Trengs bare når den som kaller ikke er spiller (f.eks. admin)."
+        }
+      }
     }
   }
 }

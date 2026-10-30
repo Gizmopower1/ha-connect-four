@@ -30,3 +30,13 @@ resign:
       selector:
         text:
 reset_scores:
+set_notifications:
+  fields:
+    enabled:
+      required: true
+      selector:
+        boolean:
+    player:
+      selector:
+        entity:
+          domain: person

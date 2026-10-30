@@ -1,5 +1,5 @@
 /* Connect Four – card + sidebar panel for the connect_four integration. */
-const CF_VERSION = "0.2.0";
+const CF_VERSION = "0.3.0";
 
 const CF_T = {
   nb: {
@@ -15,7 +15,7 @@ const CF_T = {
     leader: "👑 {n} leder med {p} poeng", shared_lead: "👑 Delt ledelse: {n} ({p} p)", none_active: "Ingen partier i gang",
     not_found: "Fant ikke {e}. Er integrasjonen «4 på rad» satt opp?", now: "akkurat nå", min: "for {n} min siden",
     hours: "for {n} t siden", days: "for {n} d siden", challenge_someone: "Trykk for å utfordre noen",
-    tap_play: "Trykk for å spille", and: "og",
+    tap_play: "Trykk for å spille", and: "og", push_label: "Varsle meg når det er min tur", push_off: "Push-varsler er av",
     rules_text: "<ol><li>Velg en motstander og trykk <b>Utfordre</b> – et 🪙 myntkast avgjør hvem som begynner.</li><li>Trykk på en <b>kolonne</b> for å slippe brikken din. Du kan ha partier mot alle samtidig.</li><li>Første til <b>fire på rad</b> – vannrett, loddrett eller på skrå – vinner.</li></ol>",
     points_text: "🏆 Seier {w} p · ⚡ Lynseier (≤ {m} egne trekk) +{b} · 🤝 Uavgjort {d} p · 🏳️ Motstander ga opp {w} p",
   },
@@ -32,7 +32,7 @@ const CF_T = {
     leader: "👑 {n} leads with {p} points", shared_lead: "👑 Shared lead: {n} ({p} p)", none_active: "No games in progress",
     not_found: "Could not find {e}. Is the Connect Four integration set up?", now: "just now", min: "{n} min ago",
     hours: "{n} h ago", days: "{n} d ago", challenge_someone: "Tap to challenge someone",
-    tap_play: "Tap to play", and: "and",
+    tap_play: "Tap to play", and: "and", push_label: "Notify me when it is my turn", push_off: "Notifications are off",
     rules_text: "<ol><li>Pick an opponent and tap <b>Challenge</b> – a 🪙 coin toss decides who starts.</li><li>Tap a <b>column</b> to drop your piece. You can play everyone at the same time.</li><li>First to get <b>four in a row</b> – horizontally, vertically or diagonally – wins.</li></ol>",
     points_text: "🏆 Win {w} p · ⚡ Lightning win (≤ {m} own moves) +{b} · 🤝 Draw {d} p · 🏳️ Opponent resigned {w} p",
   },
@@ -60,10 +60,16 @@ const CF_CSS = `
   .status .big { font-size: 1.4em; font-weight: 700; }
   .series { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--divider-color, rgba(127,127,127,.3)); }
   .back { cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box; margin-bottom: 12px;
-          padding: 14px 16px; border: none; border-radius: 14px; background: var(--primary-color); color: var(--text-primary-color, #fff);
-          font-size: 1.1em; font-weight: 700; box-shadow: 0 3px 10px rgba(0,0,0,.25); transition: transform .1s; }
+          padding: 14px 16px; border: none; border-radius: 14px; background: linear-gradient(180deg, #2372e8 0%, #0d3d91 100%); color: #fff;
+          font-size: 1.1em; font-weight: 700; box-shadow: 0 3px 10px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.25); transition: transform .1s; }
   .back:active { transform: scale(.98); }
   .back ha-icon { --mdc-icon-size: 24px; }
+  .push { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; margin: 4px 0 8px; border-radius: 14px;
+          background: var(--secondary-background-color, rgba(127,127,127,.12)); cursor: pointer; font-weight: 600; }
+  .toggle { flex: none; position: relative; width: 44px; height: 24px; border-radius: 12px; background: rgba(127,127,127,.5); transition: background .2s; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  .toggle.on { background: #2372e8; }
+  .toggle.on::after { transform: translateX(20px); }
   .board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 8px 6px 10px; border-radius: 22px; max-width: 520px; margin: 0 auto;
            background: linear-gradient(180deg, #2372e8 0%, #0d3d91 100%); box-shadow: 0 10px 26px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.25); }
   .col { display: flex; flex-direction: column; align-items: center; gap: clamp(3px, 1.1vw, 7px); padding: 2px 0; border-radius: 12px; cursor: pointer; min-width: 0; }
@@ -170,6 +176,7 @@ class ConnectFourCard extends HTMLElement {
     const style = p.picture ? `background-image:url('${cfEsc(p.picture)}')` : `background:${p.color || "#888"}`;
     return `<span class="av${small ? " sm" : ""}" style="${style}">${p.picture ? "" : cfEsc((p.name || "?")[0])}</span>`;
   }
+  _pushOn(m) { return m.by[m.me]?.push !== false; }
   _dot(game, person) { return `<span class="dot ${person === game.p1 ? "r" : "y"}"></span>`; }
   _active(g) { return g.status === "playing" ? (g.turn === 1 ? g.p1 : g.p2) : null; }
   _winner(g) { return g.result === "1" ? g.p1 : g.result === "2" ? g.p2 : null; }
@@ -190,6 +197,8 @@ class ConnectFourCard extends HTMLElement {
   _renderLobby(m) {
     let html = `<h2>🔴🟡 ${cfEsc(this._config.title || this._t("title"))}</h2>`;
     if (m.me) {
+      const on = this._pushOn(m);
+      html += `<div class="push" data-action="push" data-on="${on}"><span>🔔 ${this._t("push_label")}</span><span class="toggle${on ? " on" : ""}"></span></div>`;
       html += `<h3>${this._t("your_games")}</h3>`;
       for (const { id, game } of m.pairs.filter((x) => x.game.p1 === m.me || x.game.p2 === m.me)) html += this._opponentTile(m, id, game);
     } else {
@@ -247,7 +256,7 @@ class ConnectFourCard extends HTMLElement {
     let big, sub;
     if (g.status === "playing") {
       if (active === m.me) { big = `🎯 ${this._t("your_turn")}`; sub = this._t("you_are", { d: this._dot(g, m.me), n: cfEsc(this._name(m, opp)) }); }
-      else if (inGame) { big = `⏳ ${cfEsc(this._t("turn_of", { n: this._name(m, active) }))}`; sub = this._t("push_info"); }
+      else if (inGame) { big = `⏳ ${cfEsc(this._t("turn_of", { n: this._name(m, active) }))}`; sub = this._t(this._pushOn(m) ? "push_info" : "push_off"); }
       else { big = `${this._dot(g, active)} ${cfEsc(this._t("turn_of", { n: this._name(m, active) }))}`; sub = this._t("last_move", { t: this._ago(g.updated) }); }
     } else if (g.status === "finished") {
       const w = this._winner(g);
@@ -296,7 +305,7 @@ class ConnectFourCard extends HTMLElement {
       const myTurn = mine.filter((g) => this._active(g) === m.me).map(opp);
       const waiting = mine.filter((g) => this._active(g) !== m.me).map(opp);
       if (myTurn.length) { hot = true; t = `🎯 ${this._t("your_turn_vs", { n: this._list(myTurn) })}`; u = waiting.length ? this._t("waiting_for", { n: this._list(waiting) }) : this._t("tap_play"); }
-      else if (waiting.length) { t = `⏳ ${this._t("waiting_for", { n: this._list(waiting) })}`; u = this._t("push_info"); }
+      else if (waiting.length) { t = `⏳ ${this._t("waiting_for", { n: this._list(waiting) })}`; u = this._t(this._pushOn(m) ? "push_info" : "push_off"); }
       else { t = `⚔️ ${this._t("none_active")}`; u = this._t("challenge_someone"); }
     } else {
       const n = m.pairs.filter((x) => x.game.status === "playing").length;
@@ -336,6 +345,7 @@ class ConnectFourCard extends HTMLElement {
     const action = el.dataset.action;
     if (action === "nav") return cfNavigate(this._config.navigation_path);
     if (action === "back") return this.select(null);
+    if (action === "push") return this._call("set_notifications", { enabled: el.dataset.on !== "true" });
     if (action === "open") {
       const pair = m.pairs.find((x) => x.id === el.dataset.game);
       if (pair && pair.game.status === "none" && el.dataset.opp) await this._call("start", { opponent: el.dataset.opp });

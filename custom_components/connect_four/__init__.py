@@ -19,6 +19,7 @@ from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     ATTR_COLUMN,
+    ATTR_ENABLED,
     ATTR_GAME_ID,
     ATTR_OPPONENT,
     ATTR_PLAYER,
@@ -31,6 +32,7 @@ from .const import (
     SERVICE_DROP,
     SERVICE_RESET,
     SERVICE_RESIGN,
+    SERVICE_SET_NOTIFICATIONS,
     SERVICE_START,
     STATIC_URL,
     VERSION,
@@ -101,6 +103,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def reset(call: ServiceCall) -> None:
         await _manager(hass).async_reset()
 
+    async def set_notifications(call: ServiceCall) -> None:
+        await _manager(hass).async_set_push_for_caller(call.context.user_id, call.data[ATTR_ENABLED], call.data.get(ATTR_PLAYER))
+
     hass.services.async_register(
         DOMAIN, SERVICE_START, start,
         schema=vol.Schema({vol.Required(ATTR_OPPONENT): cv.entity_id, vol.Optional(ATTR_PLAYER): cv.entity_id}),
@@ -111,6 +116,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         schema=vol.Schema({vol.Required(ATTR_GAME_ID): cv.string, vol.Required(ATTR_COLUMN): vol.All(vol.Coerce(int), vol.Range(min=0, max=6))}),
     )
     hass.services.async_register(DOMAIN, SERVICE_RESIGN, resign, schema=vol.Schema({vol.Required(ATTR_GAME_ID): cv.string}))
+    hass.services.async_register(
+        DOMAIN, SERVICE_SET_NOTIFICATIONS, set_notifications,
+        schema=vol.Schema({vol.Required(ATTR_ENABLED): cv.boolean, vol.Optional(ATTR_PLAYER): cv.entity_id}),
+    )
     async_register_admin_service(hass, DOMAIN, SERVICE_RESET, reset)
     return True
 
