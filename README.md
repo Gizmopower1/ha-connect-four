@@ -4,6 +4,11 @@ A family Connect Four game that runs inside Home Assistant. Everyone can play ev
 from the companion app, a wall tablet or a PC. It has a scoreboard, a running score per pair of players,
 push notifications and its own sidebar entry.
 
+<p>
+  <img src="https://raw.githubusercontent.com/Gizmopower1/ha-connect-four/main/docs/lobby.png" alt="Main menu with your games and the scoreboard" width="400">
+  <img src="https://raw.githubusercontent.com/Gizmopower1/ha-connect-four/main/docs/game.png" alt="A won game on the board" width="400">
+</p>
+
 ## Features
 - **A "Connect Four" sidebar entry** with the main menu, the boards and the scoreboard.
 - **Players are picked from your Home Assistant persons**, so no YAML is needed.
