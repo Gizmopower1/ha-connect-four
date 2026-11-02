@@ -61,6 +61,9 @@ Ready-to-use examples are in [`examples/`](examples):
 
 Actions: `connect_four.start`, `connect_four.drop`, `connect_four.resign`, `connect_four.set_notifications`, and `connect_four.reset_scores` (admin only).
 
+## Resetting games and points
+Go to **Settings → Devices & services → Connect Four → Configure → Reset games and points**, and tick the box to confirm. This removes all games, including those in progress, and all series and points. Players and settings are kept. It cannot be undone.
+
 ## Upgrading from `fire_pa_rad`
 Earlier versions of this integration were called `fire_pa_rad`. When you set up Connect Four, it picks up the
 old players, phones, games and scores automatically, as long as the old integration is still set up. After that, remove the old integration and its

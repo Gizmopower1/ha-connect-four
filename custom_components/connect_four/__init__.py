@@ -55,11 +55,7 @@ def _manager(hass: HomeAssistant) -> ConnectFourManager:
 
 
 async def _async_register_lovelace_resource(hass: HomeAssistant) -> None:
-    """Keep a dashboard resource for the card, so it is defined before any dashboard renders.
-
-    Some layouts (e.g. layout-card) build their cards immediately and never retry,
-    so relying only on add_extra_js_url can show a configuration error.
-    """
+    """Keep a dashboard resource for the card, so dashboards load it together with their other cards."""
     try:
         from homeassistant.components.lovelace.const import LOVELACE_DATA
         from homeassistant.components.lovelace.resources import ResourceStorageCollection
@@ -83,9 +79,13 @@ async def _async_register_lovelace_resource(hass: HomeAssistant) -> None:
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Register the frontend file and the services."""
+    """Register the frontend file and the services.
+
+    The file is cached by the browser, because its URL holds the version. Otherwise a page
+    opened while Home Assistant starts, before this runs, gets a 404 and shows a configuration error.
+    """
     await hass.http.async_register_static_paths(
-        [StaticPathConfig(STATIC_URL, str(Path(__file__).parent / "frontend"), False)]
+        [StaticPathConfig(STATIC_URL, str(Path(__file__).parent / "frontend"), True)]
     )
     add_extra_js_url(hass, MODULE_URL)
     async_at_started(hass, _async_register_lovelace_resource)

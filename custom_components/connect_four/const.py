@@ -6,8 +6,9 @@ DOMAIN = "connect_four"
 # Earlier versions of this integration used this domain; its games and settings are imported once.
 LEGACY_DOMAIN = "fire_pa_rad"
 LEGACY_STATIC_URL = "/fire_pa_rad_static"
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 
+CONF_CONFIRM = "confirm"
 CONF_PLAYERS = "players"
 CONF_NOTIFY = "notify_services"
 CONF_SHOW_PANEL = "show_panel"

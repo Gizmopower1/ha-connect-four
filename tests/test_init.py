@@ -182,3 +182,40 @@ async def test_imports_legacy_games_and_settings(hass, persons, frontend_mocks):
     assert hass.states.get("sensor.connect_four_player1").state == "7"
     assert summary(hass)["games"][GAME_AB]["wins1"] == 2
     assert summary(hass)["total"] == 2
+
+
+async def test_options_menu_settings_and_reset(hass, persons, frontend_mocks):
+    """The options flow changes settings, and resets games and points only after confirmation."""
+    entry = await setup_entry(hass)
+    await call(hass, "start", {"opponent": B}, "user-player1")
+    await call(hass, "resign", {"game_id": GAME_AB}, "user-player1")
+    await call(hass, "start", {"opponent": B}, "user-player1")
+    assert summary(hass)["games"]
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.MENU
+    assert result["menu_options"] == ["settings", "reset"]
+
+    # Not confirmed: nothing is removed.
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "reset"})
+    assert result["step_id"] == "reset"
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"confirm": False})
+    assert result["errors"] == {"base": "confirm_required"}
+    assert summary(hass)["games"]
+
+    # Confirmed: games are gone, while players and settings stay.
+    options = dict(entry.options)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"confirm": True})
+    await hass.async_block_till_done()
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reset_done"
+    state = summary(hass)
+    assert state["games"] == {}
+    assert state["total"] == 0
+    assert entry.options == options
+
+    # The settings are still reachable through the menu.
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "settings"})
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "settings"

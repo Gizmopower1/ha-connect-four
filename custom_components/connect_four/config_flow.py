@@ -6,12 +6,13 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr, entity_registry as er, selector
 from homeassistant.util import slugify
 
 from .const import (
+    CONF_CONFIRM,
     CONF_LIGHTNING_BONUS,
     CONF_LIGHTNING_MOVES,
     CONF_NOTIFY,
@@ -131,12 +132,31 @@ class ConnectFourConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class ConnectFourOptionsFlow(OptionsFlow):
-    """Change players, phones and scoring."""
+    """Change players, phones and scoring, or reset the games and points."""
 
     def __init__(self) -> None:
         self._options: dict[str, Any] = {}
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self.async_show_menu(step_id="init", menu_options=["settings", "reset"])
+
+    async def async_step_reset(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Remove all games, series and points after an explicit confirmation."""
+        if self.config_entry.state is not ConfigEntryState.LOADED:
+            return self.async_abort(reason="not_loaded")
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if user_input[CONF_CONFIRM]:
+                await self.config_entry.runtime_data.async_reset()
+                return self.async_abort(reason="reset_done")
+            errors["base"] = "confirm_required"
+        return self.async_show_form(
+            step_id="reset",
+            data_schema=vol.Schema({vol.Required(CONF_CONFIRM, default=False): selector.BooleanSelector()}),
+            errors=errors,
+        )
+
+    async def async_step_settings(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             if len(user_input[CONF_PLAYERS]) < 2:
@@ -144,7 +164,7 @@ class ConnectFourOptionsFlow(OptionsFlow):
             else:
                 self._options = {**self.config_entry.options, **{k: (int(v) if isinstance(v, float) else v) for k, v in user_input.items()}}
                 return await self.async_step_notify()
-        return self.async_show_form(step_id="init", data_schema=_players_schema(self.hass, dict(self.config_entry.options)), errors=errors)
+        return self.async_show_form(step_id="settings", data_schema=_players_schema(self.hass, dict(self.config_entry.options)), errors=errors)
 
     async def async_step_notify(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         players = self._options[CONF_PLAYERS]

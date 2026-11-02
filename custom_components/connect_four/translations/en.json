@@ -29,6 +29,14 @@
     "step": {
       "init": {
         "title": "Connect Four",
+        "description": "What do you want to do?",
+        "menu_options": {
+          "settings": "Change players and scoring",
+          "reset": "Reset games and points"
+        }
+      },
+      "settings": {
+        "title": "Connect Four",
         "description": "Change players and scoring.",
         "data": {
           "players": "Players",
@@ -42,10 +50,22 @@
       "notify": {
         "title": "Push notifications",
         "description": "Pick the phone (mobile app) that should be notified when it is each player's turn. Choose — for no notifications."
+      },
+      "reset": {
+        "title": "Reset games and points",
+        "description": "This permanently removes all games, including those in progress, and all series and points. Players and settings are kept. This cannot be undone.",
+        "data": {
+          "confirm": "Yes, remove all games and points"
+        }
       }
     },
     "error": {
-      "min_players": "Choose at least two players."
+      "min_players": "Choose at least two players.",
+      "confirm_required": "Tick the box to confirm."
+    },
+    "abort": {
+      "reset_done": "All games and points have been reset.",
+      "not_loaded": "Connect Four is not loaded. Try again when it is running."
     }
   },
   "entity": {

@@ -29,6 +29,14 @@
     "step": {
       "init": {
         "title": "4 på rad",
+        "description": "Hva vil du gjøre?",
+        "menu_options": {
+          "settings": "Endre spillere og poeng",
+          "reset": "Nullstill partier og poeng"
+        }
+      },
+      "settings": {
+        "title": "4 på rad",
         "description": "Endre spillere og poeng.",
         "data": {
           "players": "Spillere",
@@ -42,10 +50,22 @@
       "notify": {
         "title": "Push-varsler",
         "description": "Velg mobilen (mobilappen) som skal få beskjed når det er spillerens tur. Velg — for ingen varsler."
+      },
+      "reset": {
+        "title": "Nullstill partier og poeng",
+        "description": "Dette sletter alle partier for godt, også de som pågår, og all stilling og alle poeng. Spillere og innstillinger beholdes. Dette kan ikke angres.",
+        "data": {
+          "confirm": "Ja, slett alle partier og poeng"
+        }
       }
     },
     "error": {
-      "min_players": "Velg minst to spillere."
+      "min_players": "Velg minst to spillere.",
+      "confirm_required": "Kryss av i boksen for å bekrefte."
+    },
+    "abort": {
+      "reset_done": "Alle partier og poeng er nullstilt.",
+      "not_loaded": "4 på rad er ikke lastet. Prøv igjen når integrasjonen kjører."
     }
   },
   "entity": {

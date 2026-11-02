@@ -1,5 +1,5 @@
 /* Connect Four – card + sidebar panel for the connect_four integration. */
-const CF_VERSION = "0.3.0";
+const CF_VERSION = "0.3.1";
 
 const CF_T = {
   nb: {
