@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
@@ -219,3 +220,66 @@ async def test_options_menu_settings_and_reset(hass, persons, frontend_mocks):
     result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "settings"})
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "settings"
+
+
+async def test_poke(hass, persons, frontend_mocks, freezer):
+    """The waiting player may poke the active player, 30 minutes after the last move or poke."""
+    notify = async_mock_service(hass, "notify", "mobile_app_player2")
+    await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_player2", C: NO_NOTIFY})
+    with patch("custom_components.connect_four.manager.random.choice", return_value=1):
+        await call(hass, "start", {"opponent": B}, "user-player1")
+    await call(hass, "drop", {"game_id": GAME_AB, "column": 3}, "user-player1")
+    notify.clear()
+
+    async def poke(user):
+        await call(hass, "poke", {"game_id": GAME_AB}, user)
+
+    async def rejected(user, key):
+        with pytest.raises(ServiceValidationError) as err:
+            await poke(user)
+        assert err.value.translation_key == key
+        assert notify == []
+
+    # Too early, and only the waiting player in this game may poke.
+    await rejected("user-player1", "poke_too_soon")
+    freezer.tick(timedelta(minutes=29, seconds=59))
+    await rejected("user-player1", "poke_too_soon")
+    freezer.tick(timedelta(seconds=1))
+    await rejected("user-player2", "poke_your_turn")
+    await rejected("user-player3", "not_your_game")
+    await rejected("user-tablet", "not_your_game")
+
+    await poke("user-player1")
+    assert len(notify) == 1
+    assert notify[0].data["message"].startswith("👉 Player1")
+    assert notify[0].data["data"]["url"] == f"/connect-four?game={GAME_AB}"
+
+    # The next poke must wait another 30 minutes, which the card can read.
+    notify.clear()
+    game = summary(hass)["games"][GAME_AB]
+    assert game["poke_at"] > game["poked"]
+    freezer.tick(timedelta(minutes=29))
+    await rejected("user-player1", "poke_too_soon")
+    freezer.tick(timedelta(minutes=1))
+    await poke("user-player1")
+    assert len(notify) == 1
+
+    # A new move restarts the wait, and now the other player is the one who may poke.
+    notify.clear()
+    await call(hass, "drop", {"game_id": GAME_AB, "column": 4}, "user-player2")
+    await call(hass, "drop", {"game_id": GAME_AB, "column": 3}, "user-player1")
+    notify.clear()
+    await rejected("user-player1", "poke_too_soon")
+
+    # A player with notifications off can not be poked.
+    await call(hass, "set_notifications", {"enabled": False}, "user-player2")
+    assert next(p for p in summary(hass)["players"] if p["person"] == B)["notifiable"] is False
+    freezer.tick(timedelta(minutes=30))
+    await rejected("user-player1", "poke_no_push")
+
+    # A finished game can not be poked.
+    await call(hass, "set_notifications", {"enabled": True}, "user-player2")
+    await call(hass, "resign", {"game_id": GAME_AB}, "user-player2")
+    notify.clear()
+    await rejected("user-player1", "not_playing")
+    assert "poke_at" not in summary(hass)["games"][GAME_AB]

@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 DOMAIN = "connect_four"
 # Earlier versions of this integration used this domain; its games and settings are imported once.
 LEGACY_DOMAIN = "fire_pa_rad"
 LEGACY_STATIC_URL = "/fire_pa_rad_static"
-VERSION = "0.3.1"
+VERSION = "0.4.2"
+
+# A waiting player may poke this long after the last move or poke.
+POKE_INTERVAL = timedelta(minutes=30)
 
 CONF_CONFIRM = "confirm"
 CONF_PLAYERS = "players"
@@ -42,6 +47,7 @@ SERVICE_DROP = "drop"
 SERVICE_RESIGN = "resign"
 SERVICE_RESET = "reset_scores"
 SERVICE_SET_NOTIFICATIONS = "set_notifications"
+SERVICE_POKE = "poke"
 
 ATTR_GAME_ID = "game_id"
 ATTR_COLUMN = "column"

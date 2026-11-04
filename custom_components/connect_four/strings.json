@@ -85,7 +85,10 @@
     "not_your_game": { "message": "You can only play in your own games." },
     "not_your_turn": { "message": "It is {name}'s turn." },
     "column_full": { "message": "That column is full." },
-    "not_your_settings": { "message": "You can only change your own notifications." }
+    "not_your_settings": { "message": "You can only change your own notifications." },
+    "poke_your_turn": { "message": "It is your own turn." },
+    "poke_no_push": { "message": "{name} does not get notifications." },
+    "poke_too_soon": { "message": "You can poke again in {minutes} min." }
   },
   "services": {
     "start": {
@@ -107,6 +110,13 @@
     "resign": {
       "name": "Resign",
       "description": "Give up the game. With fewer than two pieces played the game is cancelled without points.",
+      "fields": {
+        "game_id": { "name": "Game", "description": "Game id." }
+      }
+    },
+    "poke": {
+      "name": "Poke",
+      "description": "Remind your opponent by notification that it is their turn. Possible 30 minutes after the last move or poke.",
       "fields": {
         "game_id": { "name": "Game", "description": "Game id." }
       }

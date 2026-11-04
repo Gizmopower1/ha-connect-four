@@ -1,5 +1,5 @@
 /* Connect Four – card + sidebar panel for the connect_four integration. */
-const CF_VERSION = "0.3.1";
+const CF_VERSION = "0.4.2";
 
 const CF_T = {
   nb: {
@@ -16,6 +16,7 @@ const CF_T = {
     not_found: "Fant ikke {e}. Er integrasjonen «4 på rad» satt opp?", now: "akkurat nå", min: "for {n} min siden",
     hours: "for {n} t siden", days: "for {n} d siden", challenge_someone: "Trykk for å utfordre noen",
     tap_play: "Trykk for å spille", and: "og", push_label: "Varsle meg når det er min tur", push_off: "Push-varsler er av",
+    poke: "Dult", poke_in: "om {n} min", poke_title: "Send {n} et varsel om at det er deres tur",
     rules_text: "<ol><li>Velg en motstander og trykk <b>Utfordre</b> – et 🪙 myntkast avgjør hvem som begynner.</li><li>Trykk på en <b>kolonne</b> for å slippe brikken din. Du kan ha partier mot alle samtidig.</li><li>Første til <b>fire på rad</b> – vannrett, loddrett eller på skrå – vinner.</li></ol>",
     points_text: "🏆 Seier {w} p · ⚡ Lynseier (≤ {m} egne trekk) +{b} · 🤝 Uavgjort {d} p · 🏳️ Motstander ga opp {w} p",
   },
@@ -33,6 +34,7 @@ const CF_T = {
     not_found: "Could not find {e}. Is the Connect Four integration set up?", now: "just now", min: "{n} min ago",
     hours: "{n} h ago", days: "{n} d ago", challenge_someone: "Tap to challenge someone",
     tap_play: "Tap to play", and: "and", push_label: "Notify me when it is my turn", push_off: "Notifications are off",
+    poke: "Poke", poke_in: "in {n} min", poke_title: "Send {n} a notification that it is their turn",
     rules_text: "<ol><li>Pick an opponent and tap <b>Challenge</b> – a 🪙 coin toss decides who starts.</li><li>Tap a <b>column</b> to drop your piece. You can play everyone at the same time.</li><li>First to get <b>four in a row</b> – horizontally, vertically or diagonally – wins.</li></ol>",
     points_text: "🏆 Win {w} p · ⚡ Lightning win (≤ {m} own moves) +{b} · 🤝 Draw {d} p · 🏳️ Opponent resigned {w} p",
   },
@@ -58,6 +60,12 @@ const CF_CSS = `
   .dot.r { background: #e53935; } .dot.y { background: #fdd835; }
   .status { padding: 14px 16px; border-radius: 16px; background: var(--secondary-background-color, rgba(127,127,127,.12)); margin-bottom: 12px; }
   .status .big { font-size: 1.4em; font-weight: 700; }
+  .status .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .poke { flex: none; border: none; border-radius: 12px; padding: 8px 12px; font-size: .9em; font-weight: 700; line-height: 1.2; white-space: nowrap; color: #fff; cursor: pointer;
+          background: linear-gradient(180deg, #2372e8 0%, #0d3d91 100%); box-shadow: 0 2px 6px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.25); transition: transform .1s; }
+  .poke:active { transform: scale(.96); }
+  .poke:disabled { background: rgba(127,127,127,.3); color: inherit; box-shadow: none; cursor: default; }
+  .poke small { display: block; font-size: .8em; font-weight: 500; opacity: .85; }
   .series { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--divider-color, rgba(127,127,127,.3)); }
   .back { cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box; margin-bottom: 12px;
           padding: 14px 16px; border: none; border-radius: 14px; background: linear-gradient(180deg, #2372e8 0%, #0d3d91 100%); color: #fff;
@@ -86,7 +94,8 @@ const CF_CSS = `
   .cell.r, .cell.y { box-shadow: inset 0 -3px 6px rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.4); }
   .last { animation: cf-fall .6s cubic-bezier(.55,0,.8,1.25); }
   @keyframes cf-fall { from { transform: translateY(calc(var(--rad) * -116%)); } to { transform: translateY(0); } }
-  .win { animation: cf-pulse .8s ease-in-out infinite alternate; box-shadow: 0 0 0 3px #fff, 0 0 14px 4px rgba(255,255,255,.8) !important; }
+  .win, .recent { animation: cf-pulse .8s ease-in-out infinite alternate; box-shadow: 0 0 0 3px #fff, 0 0 14px 4px rgba(255,255,255,.8) !important; }
+  .recent.last { animation: cf-fall .6s cubic-bezier(.55,0,.8,1.25), cf-pulse .8s ease-in-out .6s infinite alternate; }
   @keyframes cf-pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; position: relative; clear: both; }
   .btn { flex: 1; min-width: 120px; border: none; border-radius: 14px; padding: 14px; font-size: 1em; font-weight: 700; color: #fff; cursor: pointer; }
@@ -277,11 +286,20 @@ class ConnectFourCard extends HTMLElement {
       for (let r = 0; r < 6; r++) {
         const i = r * 7 + c, v = board[i];
         const cls = v === "R" ? "r" : v === "Y" ? "y" : "e";
-        const extra = win.includes(i) ? " win" : i === g.last && animate ? " last" : "";
+        const extra = win.includes(i) ? " win" : g.status === "playing" && i === g.last ? ` recent${animate ? " last" : ""}` : "";
         cells += `<div class="cell ${cls}${extra}" style="--rad:${r + 2}"></div>`;
       }
       const ghost = canPlay && board[c] === "." ? (g.turn === 1 ? "r" : "y") : "";
       cols += `<div class="col${canPlay && board[c] === "." ? "" : " locked"}" data-action="drop" data-col="${c}"><div class="ghost ${ghost}"></div>${cells}</div>`;
+    }
+
+    let poke = "";
+    if (g.status === "playing" && inGame && active !== m.me && m.by[active]?.notifiable) {
+      const left = Math.ceil((new Date(g.poke_at) - Date.now()) / 60000);
+      const title = cfEsc(this._t("poke_title", { n: this._name(m, active) }));
+      poke = left > 0
+        ? `<button class="poke" title="${title}" disabled>👉 ${this._t("poke")}<small>${this._t("poke_in", { n: left })}</small></button>`
+        : `<button class="poke" title="${title}" data-action="poke">👉 ${this._t("poke")}</button>`;
     }
 
     let actions;
@@ -292,7 +310,7 @@ class ConnectFourCard extends HTMLElement {
     } else actions = `<button class="btn go" data-action="start" data-game="${id}">▶ ${this._t(g.status === "finished" ? "new_round" : "start")}</button>`;
 
     return `<button class="back" data-action="back"><ha-icon icon="mdi:view-grid"></ha-icon>${this._t("back")}</button>
-      <div class="status"><div class="big">${big}</div>${sub ? `<div class="muted">${sub}</div>` : ""}<div class="series">${series}</div></div>
+      <div class="status"><div class="head"><div class="big">${big}</div>${poke}</div>${sub ? `<div class="muted">${sub}</div>` : ""}<div class="series">${series}</div></div>
       <div class="board">${cols}</div><div class="actions">${actions}</div>`;
   }
 
@@ -355,6 +373,7 @@ class ConnectFourCard extends HTMLElement {
     if (!pair) return;
     if (action === "drop" && !el.classList.contains("locked")) return this._call("drop", { game_id: pair.id, column: Number(el.dataset.col) });
     if (action === "start") return this._call("start", m.me === pair.game.p1 || m.me === pair.game.p2 ? { opponent: m.me === pair.game.p1 ? pair.game.p2 : pair.game.p1 } : { player: pair.game.p1, opponent: pair.game.p2 });
+    if (action === "poke") { el.disabled = true; return this._call("poke", { game_id: pair.id }); }
     if (action === "resign") { this._confirm = true; this._sig = null; return this._render(); }
     if (action === "resign-no") { this._confirm = false; this._sig = null; return this._render(); }
     if (action === "resign-yes") { this._confirm = false; return this._call("resign", { game_id: pair.id }); }

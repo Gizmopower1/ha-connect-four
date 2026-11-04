@@ -85,7 +85,10 @@
     "not_your_game": { "message": "Du kan bare spille i dine egne partier." },
     "not_your_turn": { "message": "Det er {name} sin tur." },
     "column_full": { "message": "Den kolonnen er full." },
-    "not_your_settings": { "message": "Du kan bare endre dine egne varsler." }
+    "not_your_settings": { "message": "Du kan bare endre dine egne varsler." },
+    "poke_your_turn": { "message": "Det er din egen tur." },
+    "poke_no_push": { "message": "{name} får ikke varsler." },
+    "poke_too_soon": { "message": "Du kan dulte igjen om {minutes} min." }
   },
   "services": {
     "start": {
@@ -107,6 +110,13 @@
     "resign": {
       "name": "Gi opp",
       "description": "Gi opp partiet. Med færre enn to brikker lagt avbrytes partiet uten poeng.",
+      "fields": {
+        "game_id": { "name": "Parti", "description": "Parti-id." }
+      }
+    },
+    "poke": {
+      "name": "Dult",
+      "description": "Minn motstanderen på at det er deres tur, med et varsel. Mulig 30 minutter etter siste trekk eller dult.",
       "fields": {
         "game_id": { "name": "Parti", "description": "Parti-id." }
       }

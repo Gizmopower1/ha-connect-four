@@ -14,6 +14,8 @@ push notifications and its own sidebar entry.
 - **Players are picked from your Home Assistant persons**, so no YAML is needed.
 - **One game per pair of players.** You can play several opponents at once, and each pair keeps its own score ("You 3 – 1 Player2").
 - **Push notifications** when it is your turn ("Your turn against Player1! 🎯"). Tapping one opens the right board, and each player's phone is found automatically. Each player can turn their own notifications on or off with a switch in the main menu. They are on by default.
+- **Poke** your opponent when they take their time. 30 minutes after the last move, a button next to "Player1's turn" sends them a reminder, and it can be used again every 30 minutes.
+- **The last piece keeps glowing**, so you can see where your opponent played even if you open the game much later.
 - **Anti-cheat:** a player who is logged in can only move in their own games, and only on their turn.
   A shared user (for example a wall tablet) can play for everyone.
 - **Points:** win 3, lightning win +1 (≤ 7 own moves), draw 1, opponent resigned 3. You can change all of these.
@@ -64,7 +66,7 @@ Ready-to-use examples are in [`examples/`](examples):
 | `sensor.connect_four_<person>` | Points for each player, plus wins, draws and losses |
 | `switch.connect_four_push_<person>` | Turns push notifications on or off for one player |
 
-Actions: `connect_four.start`, `connect_four.drop`, `connect_four.resign`, `connect_four.set_notifications`, and `connect_four.reset_scores` (admin only).
+Actions: `connect_four.start`, `connect_four.drop`, `connect_four.resign`, `connect_four.poke`, `connect_four.set_notifications`, and `connect_four.reset_scores` (admin only).
 
 ## Resetting games and points
 Go to **Settings → Devices & services → Connect Four → Configure → Reset games and points**, and tick the box to confirm. This removes all games, including those in progress, and all series and points. Players and settings are kept. It cannot be undone.

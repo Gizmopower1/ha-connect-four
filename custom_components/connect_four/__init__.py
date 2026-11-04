@@ -30,6 +30,7 @@ from .const import (
     PANEL_ELEMENT,
     PANEL_URL_PATH,
     SERVICE_DROP,
+    SERVICE_POKE,
     SERVICE_RESET,
     SERVICE_RESIGN,
     SERVICE_SET_NOTIFICATIONS,
@@ -100,6 +101,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def resign(call: ServiceCall) -> None:
         await _manager(hass).async_resign(call.context.user_id, call.data[ATTR_GAME_ID])
 
+    async def poke(call: ServiceCall) -> None:
+        await _manager(hass).async_poke(call.context.user_id, call.data[ATTR_GAME_ID])
+
     async def reset(call: ServiceCall) -> None:
         await _manager(hass).async_reset()
 
@@ -116,6 +120,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         schema=vol.Schema({vol.Required(ATTR_GAME_ID): cv.string, vol.Required(ATTR_COLUMN): vol.All(vol.Coerce(int), vol.Range(min=0, max=6))}),
     )
     hass.services.async_register(DOMAIN, SERVICE_RESIGN, resign, schema=vol.Schema({vol.Required(ATTR_GAME_ID): cv.string}))
+    hass.services.async_register(DOMAIN, SERVICE_POKE, poke, schema=vol.Schema({vol.Required(ATTR_GAME_ID): cv.string}))
     hass.services.async_register(
         DOMAIN, SERVICE_SET_NOTIFICATIONS, set_notifications,
         schema=vol.Schema({vol.Required(ATTR_ENABLED): cv.boolean, vol.Optional(ATTR_PLAYER): cv.entity_id}),

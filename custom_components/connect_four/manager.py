@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import datetime, timedelta
 import logging
+import math
 import random
 from typing import Any
 
@@ -29,6 +31,7 @@ from .const import (
     LEGACY_DOMAIN,
     NO_NOTIFY,
     PANEL_URL_PATH,
+    POKE_INTERVAL,
     RESULT_DRAW,
     STATUS_FINISHED,
     STATUS_NONE,
@@ -49,6 +52,7 @@ MESSAGES = {
         "won_lightning": "{winner} vant over {loser} på {moves} trekk! ⚡ Lynseier: +{points} poeng",
         "draw": "Uavgjort mellom {winner} og {loser}! 🤝",
         "resigned": "{loser} ga opp – {winner} vinner! 🏳️",
+        "poke": "👉 {name} venter på trekket ditt – det er din tur!",
         "title": "🔴🟡 4 på rad",
     },
     "en": {
@@ -60,6 +64,7 @@ MESSAGES = {
         "won_lightning": "{winner} beat {loser} in {moves} moves! ⚡ Lightning win: +{points} points",
         "draw": "Draw between {winner} and {loser}! 🤝",
         "resigned": "{loser} resigned – {winner} wins! 🏳️",
+        "poke": "👉 {name} is waiting for your move – it's your turn!",
         "title": "🔴🟡 Connect Four",
     },
 }
@@ -262,6 +267,30 @@ class ConnectFourManager:
         winner = game["p2"] if loser == game["p1"] else game["p1"]
         await self._finish(game, game_id, winner=winner, loser=loser, how="resigned")
 
+    def next_poke(self, game: dict[str, Any]) -> datetime:
+        """Return when the waiting player may poke: an interval after the last move or poke."""
+        return max(dt_util.parse_datetime(t) for t in (game["updated"], game.get("poked")) if t) + POKE_INTERVAL
+
+    async def async_poke(self, user_id: str | None, game_id: str) -> None:
+        """Remind the active player that it is their turn. Only their waiting opponent may do this."""
+        game = self._require_game(game_id)
+        if game.get("status") != STATUS_PLAYING:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_playing")
+        caller = self.person_for_user(user_id)
+        if caller not in (game["p1"], game["p2"]):
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_your_game")
+        active = self.active_player(game)
+        if caller == active:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="poke_your_turn")
+        if self.notify_service(active) is None:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="poke_no_push", translation_placeholders={"name": self.name(active)})
+        remaining = self.next_poke(game) - dt_util.utcnow()
+        if remaining > timedelta(0):
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="poke_too_soon", translation_placeholders={"minutes": str(math.ceil(remaining.total_seconds() / 60))})
+        game["poked"] = dt_util.utcnow().isoformat()
+        self._changed()
+        await self._notify(active, "poke", game_id, name=self.name(caller))
+
     async def async_reset(self) -> None:
         """Reset all scores, series and games."""
         self.data.update(games={}, stats={}, total=0, last_result="")
@@ -303,11 +332,15 @@ class ConnectFourManager:
     async def _notify(self, person: str, key: str, game_id: str, **fmt: Any) -> None:
         await self._notify_text(person, MESSAGES[self.lang][key].format(**fmt), game_id)
 
-    async def _notify_text(self, person: str, message: str, game_id: str) -> None:
-        if not self.push_enabled(person):
-            return
+    def notify_service(self, person: str) -> str | None:
+        """Return the notify service that reaches a player, or None if they get no notifications."""
         service = self.entry.options.get(CONF_NOTIFY, {}).get(person, NO_NOTIFY)
-        if not service or service == NO_NOTIFY or "." not in service:
+        if not self.push_enabled(person) or not service or service == NO_NOTIFY or "." not in service:
+            return None
+        return service
+
+    async def _notify_text(self, person: str, message: str, game_id: str) -> None:
+        if (service := self.notify_service(person)) is None:
             return
         domain, name = service.split(".", 1)
         url = f"/{PANEL_URL_PATH}?game={game_id}"
@@ -334,10 +367,18 @@ class ConnectFourManager:
                 "user_id": state.attributes.get("user_id") if state else None,
                 "picture": state.attributes.get("entity_picture") if state else None,
                 "push": self.push_enabled(person),
+                "notifiable": self.notify_service(person) is not None,
                 **s, "played": s["wins"] + s["draws"] + s["losses"],
             })
         games = {
-            gid: {**game, "active": self.active_player(game) if game.get("status") == STATUS_PLAYING else None}
+            gid: {
+                **game,
+                **(
+                    {"active": self.active_player(game), "poke_at": self.next_poke(game).isoformat()}
+                    if game.get("status") == STATUS_PLAYING
+                    else {"active": None}
+                ),
+            }
             for gid, game in self.data["games"].items()
             if game["p1"] in self.players and game["p2"] in self.players
         }
