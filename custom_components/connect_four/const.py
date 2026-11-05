@@ -8,7 +8,7 @@ DOMAIN = "connect_four"
 # Earlier versions of this integration used this domain; its games and settings are imported once.
 LEGACY_DOMAIN = "fire_pa_rad"
 LEGACY_STATIC_URL = "/fire_pa_rad_static"
-VERSION = "0.4.2"
+VERSION = "0.4.3"
 
 # A waiting player may poke this long after the last move or poke.
 POKE_INTERVAL = timedelta(minutes=30)
@@ -17,6 +17,8 @@ CONF_CONFIRM = "confirm"
 CONF_PLAYERS = "players"
 CONF_NOTIFY = "notify_services"
 CONF_SHOW_PANEL = "show_panel"
+# Users not linked to a player who may still play for everyone, e.g. a wall tablet.
+CONF_SHARED_USERS = "shared_users"
 CONF_POINTS_WIN = "points_win"
 CONF_POINTS_DRAW = "points_draw"
 CONF_LIGHTNING_MOVES = "lightning_moves"

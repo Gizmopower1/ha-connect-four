@@ -19,6 +19,7 @@ from .const import (
     CONF_PLAYERS,
     CONF_POINTS_DRAW,
     CONF_POINTS_WIN,
+    CONF_SHARED_USERS,
     CONF_SHOW_PANEL,
     DEFAULT_LIGHTNING_BONUS,
     DEFAULT_LIGHTNING_MOVES,
@@ -61,11 +62,23 @@ def _label(hass: HomeAssistant, person: str) -> str:
     return state.name if state else person
 
 
-def _players_schema(hass: HomeAssistant, current: dict[str, Any]) -> vol.Schema:
+async def _user_options(hass: HomeAssistant) -> list[selector.SelectOptionDict]:
+    """Active, human Home Assistant users, for picking shared users such as a wall tablet."""
+    users = [u for u in await hass.auth.async_get_users() if u.is_active and not u.system_generated]
+    return [selector.SelectOptionDict(value=u.id, label=u.name or u.id) for u in sorted(users, key=lambda u: (u.name or "").lower())]
+
+
+async def _players_schema(hass: HomeAssistant, current: dict[str, Any]) -> vol.Schema:
     default_players = current.get(CONF_PLAYERS) or [s.entity_id for s in hass.states.async_all("person")]
+    users = await _user_options(hass)
+    known = {u["value"] for u in users}
+    default_shared = [u for u in current.get(CONF_SHARED_USERS, []) if u in known]
     return vol.Schema({
         vol.Required(CONF_PLAYERS, default=default_players): selector.EntitySelector(
             selector.EntitySelectorConfig(domain="person", multiple=True)
+        ),
+        vol.Optional(CONF_SHARED_USERS, default=default_shared): selector.SelectSelector(
+            selector.SelectSelectorConfig(options=users, multiple=True, mode=selector.SelectSelectorMode.DROPDOWN)
         ),
         vol.Required(CONF_SHOW_PANEL, default=current.get(CONF_SHOW_PANEL, True)): selector.BooleanSelector(),
         vol.Required(CONF_POINTS_WIN, default=current.get(CONF_POINTS_WIN, DEFAULT_POINTS_WIN)): selector.NumberSelector(
@@ -115,7 +128,7 @@ class ConnectFourConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 self._options = {k: (int(v) if isinstance(v, float) else v) for k, v in user_input.items()}
                 return await self.async_step_notify()
-        return self.async_show_form(step_id="user", data_schema=_players_schema(self.hass, user_input or _legacy_options(self.hass)), errors=errors)
+        return self.async_show_form(step_id="user", data_schema=await _players_schema(self.hass, user_input or _legacy_options(self.hass)), errors=errors)
 
     async def async_step_notify(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         players = self._options[CONF_PLAYERS]
@@ -164,7 +177,7 @@ class ConnectFourOptionsFlow(OptionsFlow):
             else:
                 self._options = {**self.config_entry.options, **{k: (int(v) if isinstance(v, float) else v) for k, v in user_input.items()}}
                 return await self.async_step_notify()
-        return self.async_show_form(step_id="settings", data_schema=_players_schema(self.hass, dict(self.config_entry.options)), errors=errors)
+        return self.async_show_form(step_id="settings", data_schema=await _players_schema(self.hass, dict(self.config_entry.options)), errors=errors)
 
     async def async_step_notify(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         players = self._options[CONF_PLAYERS]

@@ -17,7 +17,9 @@ push notifications and its own sidebar entry.
 - **Poke** your opponent when they take their time. 30 minutes after the last move, a button next to "Player1's turn" sends them a reminder, and it can be used again every 30 minutes.
 - **The last piece keeps glowing**, so you can see where your opponent played even if you open the game much later.
 - **Anti-cheat:** a player who is logged in can only move in their own games, and only on their turn.
-  A shared user (for example a wall tablet) can play for everyone.
+  A user that is not linked to a player can only watch, unless you add it under **Shared users** in the settings
+  (for example a wall tablet), which can then play for everyone. Make sure each player's user is linked to their person
+  under **Settings → People**.
 - **Points:** win 3, lightning win +1 (≤ 7 own moves), draw 1, opponent resigned 3. You can change all of these.
 - **Optional dashboard cards:** the full game, a small "your turn" card and a status card.
 - English and Norwegian (Bokmål). The language follows your Home Assistant language setting.

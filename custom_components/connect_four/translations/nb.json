@@ -6,11 +6,15 @@
         "description": "Velg personene i Home Assistant som skal spille. Hvert par får sitt eget parti, så alle kan spille mot alle samtidig.",
         "data": {
           "players": "Spillere",
+          "shared_users": "Felles brukere som kan spille for alle (f.eks. nettbrett på veggen)",
           "show_panel": "Vis i sidemenyen",
           "points_win": "Poeng for seier",
           "points_draw": "Poeng for uavgjort",
           "lightning_moves": "Lynseier: maks egne trekk",
           "lightning_bonus": "Lynseier: bonuspoeng"
+        },
+        "data_description": {
+          "shared_users": "Brukere som ikke er koblet til en spiller, kan bare se på, med mindre du velger dem her. Velg bare en bruker som hele familien deler, for eksempel et nettbrett på veggen."
         }
       },
       "notify": {
@@ -40,11 +44,15 @@
         "description": "Endre spillere og poeng.",
         "data": {
           "players": "Spillere",
+          "shared_users": "Felles brukere som kan spille for alle (f.eks. nettbrett på veggen)",
           "show_panel": "Vis i sidemenyen",
           "points_win": "Poeng for seier",
           "points_draw": "Poeng for uavgjort",
           "lightning_moves": "Lynseier: maks egne trekk",
           "lightning_bonus": "Lynseier: bonuspoeng"
+        },
+        "data_description": {
+          "shared_users": "Brukere som ikke er koblet til en spiller, kan bare se på, med mindre du velger dem her. Velg bare en bruker som hele familien deler, for eksempel et nettbrett på veggen."
         }
       },
       "notify": {
@@ -83,6 +91,7 @@
     "invalid_players": { "message": "Velg to forskjellige spillere som er med i 4 på rad." },
     "not_playing": { "message": "Det er ikke noe parti i gang." },
     "not_your_game": { "message": "Du kan bare spille i dine egne partier." },
+    "not_a_player": { "message": "Brukeren din er ikke koblet til en spiller, så du kan bare se på. Be en administrator koble brukeren din til personen din, eller legge den til som felles bruker i innstillingene for 4 på rad." },
     "not_your_turn": { "message": "Det er {name} sin tur." },
     "column_full": { "message": "Den kolonnen er full." },
     "not_your_settings": { "message": "Du kan bare endre dine egne varsler." },
@@ -130,7 +139,7 @@
       "description": "Slå push-varsler av eller på. En innlogget spiller endrer sine egne; ellers må spilleren velges.",
       "fields": {
         "enabled": { "name": "På", "description": "Om det skal sendes push-varsler." },
-        "player": { "name": "Spiller", "description": "Trengs bare når den som kaller ikke er spiller (f.eks. admin)." }
+        "player": { "name": "Spiller", "description": "Trengs bare når den som kaller ikke er spiller (f.eks. felles nettbrett)." }
       }
     }
   }

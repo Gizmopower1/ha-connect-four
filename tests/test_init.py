@@ -12,7 +12,7 @@ from homeassistant.core import Context, HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
 
-from custom_components.connect_four.const import CONF_NOTIFY, CONF_PLAYERS, DOMAIN, NO_NOTIFY
+from custom_components.connect_four.const import CONF_NOTIFY, CONF_PLAYERS, CONF_SHARED_USERS, DOMAIN, NO_NOTIFY
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_mock_service
 
@@ -20,10 +20,13 @@ A, B, C = "person.player1", "person.player2", "person.player3"
 GAME_AB = "player1__player2"
 
 
-async def setup_entry(hass: HomeAssistant, notify: dict | None = None) -> MockConfigEntry:
+async def setup_entry(hass: HomeAssistant, notify: dict | None = None, shared: list[str] | None = None) -> MockConfigEntry:
     entry = MockConfigEntry(
         domain=DOMAIN, title="Connect Four", data={},
-        options={CONF_PLAYERS: [A, B, C], CONF_NOTIFY: notify or {A: NO_NOTIFY, B: NO_NOTIFY, C: NO_NOTIFY}},
+        options={
+            CONF_PLAYERS: [A, B, C], CONF_NOTIFY: notify or {A: NO_NOTIFY, B: NO_NOTIFY, C: NO_NOTIFY},
+            CONF_SHARED_USERS: shared or [],
+        },
     )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -69,7 +72,7 @@ async def play(hass, game_id, columns, users):
 
 async def test_full_game_scoring_and_rules(hass, persons, frontend_mocks):
     notify = async_mock_service(hass, "notify", "mobile_app_player2")
-    await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_player2", C: NO_NOTIFY})
+    await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_player2", C: NO_NOTIFY}, shared=["user-tablet"])
     users = {A: "user-player1", B: "user-player2", C: "user-player3"}
 
     with patch("custom_components.connect_four.manager.random.choice", return_value=1):
@@ -283,3 +286,32 @@ async def test_poke(hass, persons, frontend_mocks, freezer):
     notify.clear()
     await rejected("user-player1", "not_playing")
     assert "poke_at" not in summary(hass)["games"][GAME_AB]
+
+
+async def test_unlinked_user_can_only_watch(hass, persons, frontend_mocks):
+    """A user who is not a player and not shared can not play for anyone (issue #2)."""
+    # Player4 has a person, but is not taking part; "user-guest" has no person at all.
+    hass.states.async_set("person.player4", "home", {"friendly_name": "Player4", "user_id": "user-player4", "device_trackers": []})
+    await setup_entry(hass, shared=["user-tablet"])
+    with patch("custom_components.connect_four.manager.random.choice", return_value=1):
+        await call(hass, "start", {"opponent": B}, "user-player1")
+    await call(hass, "drop", {"game_id": GAME_AB, "column": 3}, "user-player1")
+
+    for user in ("user-guest", "user-player4"):
+        for service, data in (
+            ("drop", {"game_id": GAME_AB, "column": 0}),
+            ("resign", {"game_id": GAME_AB}),
+            ("start", {"player": A, "opponent": C}),
+            ("set_notifications", {"enabled": False, "player": B}),
+        ):
+            with pytest.raises(ServiceValidationError) as err:
+                await call(hass, service, data, user)
+            assert err.value.translation_key == "not_a_player"
+    game = summary(hass)["games"][GAME_AB]
+    assert game["moves"] == 1 and game["active"] == B
+    assert summary(hass)["shared_users"] == ["user-tablet"]
+
+    # The shared tablet and the system itself (automations) may still play for the active player.
+    await call(hass, "drop", {"game_id": GAME_AB, "column": 4}, "user-tablet")
+    await call(hass, "drop", {"game_id": GAME_AB, "column": 3}, None)
+    assert summary(hass)["games"][GAME_AB]["moves"] == 3

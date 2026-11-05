@@ -1,5 +1,5 @@
 /* Connect Four – card + sidebar panel for the connect_four integration. */
-const CF_VERSION = "0.4.2";
+const CF_VERSION = "0.4.3";
 
 const CF_T = {
   nb: {
@@ -16,6 +16,7 @@ const CF_T = {
     not_found: "Fant ikke {e}. Er integrasjonen «4 på rad» satt opp?", now: "akkurat nå", min: "for {n} min siden",
     hours: "for {n} t siden", days: "for {n} d siden", challenge_someone: "Trykk for å utfordre noen",
     tap_play: "Trykk for å spille", and: "og", push_label: "Varsle meg når det er min tur", push_off: "Push-varsler er av",
+    view_only: "👀 Du kan bare se på. Brukeren din er ikke koblet til en spiller – be en administrator koble den til personen din.",
     poke: "Dult", poke_in: "om {n} min", poke_title: "Send {n} et varsel om at det er deres tur",
     rules_text: "<ol><li>Velg en motstander og trykk <b>Utfordre</b> – et 🪙 myntkast avgjør hvem som begynner.</li><li>Trykk på en <b>kolonne</b> for å slippe brikken din. Du kan ha partier mot alle samtidig.</li><li>Første til <b>fire på rad</b> – vannrett, loddrett eller på skrå – vinner.</li></ol>",
     points_text: "🏆 Seier {w} p · ⚡ Lynseier (≤ {m} egne trekk) +{b} · 🤝 Uavgjort {d} p · 🏳️ Motstander ga opp {w} p",
@@ -34,6 +35,7 @@ const CF_T = {
     not_found: "Could not find {e}. Is the Connect Four integration set up?", now: "just now", min: "{n} min ago",
     hours: "{n} h ago", days: "{n} d ago", challenge_someone: "Tap to challenge someone",
     tap_play: "Tap to play", and: "and", push_label: "Notify me when it is my turn", push_off: "Notifications are off",
+    view_only: "👀 You can only watch. Your user is not linked to a player – ask an admin to link it to your person.",
     poke: "Poke", poke_in: "in {n} min", poke_title: "Send {n} a notification that it is their turn",
     rules_text: "<ol><li>Pick an opponent and tap <b>Challenge</b> – a 🪙 coin toss decides who starts.</li><li>Tap a <b>column</b> to drop your piece. You can play everyone at the same time.</li><li>First to get <b>four in a row</b> – horizontally, vertically or diagonally – wins.</li></ol>",
     points_text: "🏆 Win {w} p · ⚡ Lightning win (≤ {m} own moves) +{b} · 🤝 Draw {d} p · 🏳️ Opponent resigned {w} p",
@@ -169,6 +171,8 @@ class ConnectFourCard extends HTMLElement {
     const players = (a.players || []).map((p, i) => ({ ...p, color: CF_COLORS[i % CF_COLORS.length] }));
     const by = Object.fromEntries(players.map((p) => [p.person, p]));
     const me = players.find((p) => p.user_id && p.user_id === this._hass.user?.id)?.person || null;
+    // Users who are not a player may only play for everyone when marked as shared (e.g. a wall tablet).
+    const shared = !me && (a.shared_users || []).includes(this._hass.user?.id);
     const pairs = [];
     for (let i = 0; i < players.length; i++)
       for (let j = i + 1; j < players.length; j++) {
@@ -176,7 +180,7 @@ class ConnectFourCard extends HTMLElement {
         const id = cfGameId(p1, p2);
         pairs.push({ id, game: { p1, p2, status: "none", wins1: 0, wins2: 0, draws: 0, ...(a.games || {})[id] } });
       }
-    return { players, by, me, pairs, total: a.total || 0, last: a.last_result || "" };
+    return { players, by, me, shared, pairs, total: a.total || 0, last: a.last_result || "" };
   }
 
   _name(m, person) { return m.by[person]?.name || person; }
@@ -211,6 +215,7 @@ class ConnectFourCard extends HTMLElement {
       html += `<h3>${this._t("your_games")}</h3>`;
       for (const { id, game } of m.pairs.filter((x) => x.game.p1 === m.me || x.game.p2 === m.me)) html += this._opponentTile(m, id, game);
     } else {
+      if (!m.shared) html += `<div class="muted">${this._t("view_only")}</div>`;
       html += `<h3>${this._t("all_games")}</h3>`;
       for (const { id, game } of m.pairs) html += this._pairTile(m, id, game);
     }
@@ -276,7 +281,8 @@ class ConnectFourCard extends HTMLElement {
 
     const board = g.board && g.board.length === 42 ? g.board : ".".repeat(42);
     const win = g.win || [];
-    const canPlay = g.status === "playing" && (!inGame || active === m.me);
+    const canAct = inGame || m.shared;
+    const canPlay = g.status === "playing" && (inGame ? active === m.me : m.shared);
     const animKey = `${id}:${g.moves}`;
     const animate = this._animated !== animKey;
     this._animated = animKey;
@@ -303,7 +309,8 @@ class ConnectFourCard extends HTMLElement {
     }
 
     let actions;
-    if (g.status === "playing") {
+    if (!canAct) actions = `<div class="muted">${this._t("view_only")}</div>`;
+    else if (g.status === "playing") {
       actions = this._confirm
         ? `<div class="muted" style="width:100%">${this._t((g.moves || 0) < 2 ? "cancel_info" : "sure")}</div><button class="btn stop" data-action="resign-yes">${this._t("yes")}</button><button class="btn grey" data-action="resign-no">${this._t("no")}</button>`
         : `<button class="btn stop" data-action="resign">🏳️ ${this._t("resign")}</button>`;

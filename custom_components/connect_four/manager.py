@@ -23,6 +23,7 @@ from .const import (
     CONF_PLAYERS,
     CONF_POINTS_DRAW,
     CONF_POINTS_WIN,
+    CONF_SHARED_USERS,
     DEFAULT_LIGHTNING_BONUS,
     DEFAULT_LIGHTNING_MOVES,
     DEFAULT_POINTS_DRAW,
@@ -111,6 +112,10 @@ class ConnectFourManager:
     def players(self) -> list[str]:
         return list(self.entry.options.get(CONF_PLAYERS, []))
 
+    @property
+    def shared_users(self) -> list[str]:
+        return list(self.entry.options.get(CONF_SHARED_USERS, []))
+
     def _opt(self, key: str, default: int) -> int:
         return int(self.entry.options.get(key, default))
 
@@ -133,6 +138,20 @@ class ConnectFourManager:
                 return state.entity_id
         return None
 
+    def caller(self, user_id: str | None) -> str | None:
+        """Return the player behind a call, or None for a shared user or the system itself.
+
+        Anyone else (a user not linked to a player and not marked as shared) may only watch.
+        """
+        if user_id is None:
+            return None
+        person = self.person_for_user(user_id)
+        if person in self.players:
+            return person
+        if user_id in self.shared_users:
+            return None
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_a_player")
+
     def push_enabled(self, person: str) -> bool:
         """Return whether a player gets push notifications (on unless turned off)."""
         return bool(self.data["push"].get(person, True))
@@ -143,8 +162,8 @@ class ConnectFourManager:
 
     async def async_set_push_for_caller(self, user_id: str | None, enabled: bool, player: str | None = None) -> None:
         """A logged-in player may only change their own notifications; others must name the player."""
-        caller = self.person_for_user(user_id)
-        if caller in self.players:
+        caller = self.caller(user_id)
+        if caller is not None:
             if player not in (None, caller):
                 raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_your_settings")
             player = caller
@@ -183,7 +202,7 @@ class ConnectFourManager:
 
     def _check_caller(self, game: dict[str, Any], caller: str | None) -> None:
         """Players logged in as themselves may only act in their own games on their turn."""
-        if caller is None or caller not in self.players:
+        if caller is None:
             return
         if caller not in (game["p1"], game["p2"]):
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_your_game")
@@ -192,8 +211,8 @@ class ConnectFourManager:
 
     async def async_start(self, user_id: str | None, opponent: str, player: str | None = None) -> str:
         """Start a game. A logged-in player challenges `opponent`; otherwise `player` must be given."""
-        caller = self.person_for_user(user_id)
-        challenger = caller if caller in self.players else player
+        caller = self.caller(user_id)
+        challenger = caller or player
         if challenger is None or challenger not in self.players or opponent not in self.players or challenger == opponent:
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_players")
 
@@ -225,7 +244,7 @@ class ConnectFourManager:
         game = self._require_game(game_id)
         if game.get("status") != STATUS_PLAYING:
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_playing")
-        caller = self.person_for_user(user_id)
+        caller = self.caller(user_id)
         self._check_caller(game, caller)
         active = self.active_player(game)
         if caller in (game["p1"], game["p2"]) and caller != active:
@@ -257,7 +276,7 @@ class ConnectFourManager:
         game = self._require_game(game_id)
         if game.get("status") != STATUS_PLAYING:
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="not_playing")
-        caller = self.person_for_user(user_id)
+        caller = self.caller(user_id)
         self._check_caller(game, caller)
         if game.get("moves", 0) < 2:
             game.update(status=STATUS_NONE, updated=dt_util.utcnow().isoformat())
@@ -383,7 +402,7 @@ class ConnectFourManager:
             if game["p1"] in self.players and game["p2"] in self.players
         }
         return {
-            "players": players, "games": games, "total": self.data.get("total", 0), "last_result": self.data.get("last_result", ""),
+            "players": players, "games": games, "shared_users": self.shared_users, "total": self.data.get("total", 0), "last_result": self.data.get("last_result", ""),
             "points_win": self._opt(CONF_POINTS_WIN, DEFAULT_POINTS_WIN), "points_draw": self._opt(CONF_POINTS_DRAW, DEFAULT_POINTS_DRAW),
             "lightning_moves": self._opt(CONF_LIGHTNING_MOVES, DEFAULT_LIGHTNING_MOVES), "lightning_bonus": self._opt(CONF_LIGHTNING_BONUS, DEFAULT_LIGHTNING_BONUS),
         }
