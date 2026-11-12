@@ -33,13 +33,25 @@ push notifications and its own sidebar entry.
 You can change the players and the points later under **Configure** on the integration.
 To change the sidebar name, rename the integration entry.
 
+### Playing from your own dashboard
+You can hide the sidebar entry and play from a dashboard instead, for example one in kiosk mode:
+1. Put a `full` card on a dashboard view, such as `/games/connect-four`.
+2. Under **Configure**, turn off **Show in the sidebar** and set **Page that notifications open** to that path.
+3. Point any `summary` card to the same page with `navigation_path`.
+4. Optional: set **Page the Home button opens** (for example `/lovelace/0`, or `/` for each user's default
+   dashboard). The main menu then gets a button that leaves the game, since kiosk mode hides the sidebar.
+   **Text on the Home button** changes its text.
+
+Notifications then open that page with `?game=<id>`, and the `full` card opens the game. The hidden
+panel stays reachable at `/connect-four`, so links in older notifications still work.
+
 ## Dashboard cards (optional)
 The sidebar entry is all you need to play. The cards are extras for your own dashboards. The integration
 registers the dashboard resource (`/connect_four_static/connect-four.js`) itself.
 
 | Mode | What it shows |
 |---|---|
-| `full` | The whole game: main menu, boards and scoreboard |
+| `full` | The whole game: main menu, boards and scoreboard. Opens the game named by `?game=` in the address |
 | `summary` | A compact "🎯 Your turn against Player2" card. Tap it to open the game |
 | `status` | Whose turn it is in every game, plus who is leading |
 
@@ -59,6 +71,9 @@ Ready-to-use examples are in [`examples/`](examples):
 | `mode` | `full` | `full`, `summary` or `status` |
 | `title` | "Connect Four" | Custom heading |
 | `navigation_path` | `/connect-four` | Where the `summary` card goes when tapped |
+| `exit_path` | from **Configure** | Overrides the integration's **Page the Home button opens** for this card. `""` hides the button |
+| `exit_label` | from **Configure** | Overrides the text on the Home button for this card |
+| `exit_icon` | `mdi:home` | Icon on the Home button |
 | `glass` | `false` | Dark see-through background for `status`, for use on top of photos (e.g. WallPanel) |
 
 ## Entities and actions

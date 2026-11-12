@@ -16,6 +16,9 @@ from .const import (
     CONF_LIGHTNING_BONUS,
     CONF_LIGHTNING_MOVES,
     CONF_NOTIFY,
+    CONF_EXIT_LABEL,
+    CONF_EXIT_PATH,
+    CONF_NOTIFY_PATH,
     CONF_PLAYERS,
     CONF_POINTS_DRAW,
     CONF_POINTS_WIN,
@@ -81,6 +84,9 @@ async def _players_schema(hass: HomeAssistant, current: dict[str, Any]) -> vol.S
             selector.SelectSelectorConfig(options=users, multiple=True, mode=selector.SelectSelectorMode.DROPDOWN)
         ),
         vol.Required(CONF_SHOW_PANEL, default=current.get(CONF_SHOW_PANEL, True)): selector.BooleanSelector(),
+        vol.Optional(CONF_NOTIFY_PATH, default=current.get(CONF_NOTIFY_PATH, "")): selector.TextSelector(),
+        vol.Optional(CONF_EXIT_PATH, default=current.get(CONF_EXIT_PATH, "")): selector.TextSelector(),
+        vol.Optional(CONF_EXIT_LABEL, default=current.get(CONF_EXIT_LABEL, "")): selector.TextSelector(),
         vol.Required(CONF_POINTS_WIN, default=current.get(CONF_POINTS_WIN, DEFAULT_POINTS_WIN)): selector.NumberSelector(
             selector.NumberSelectorConfig(min=0, max=10, mode=selector.NumberSelectorMode.BOX)
         ),
@@ -108,6 +114,23 @@ def _notify_schema(hass: HomeAssistant, players: list[str], current: dict[str, s
     })
 
 
+def _check_settings(user_input: dict[str, Any]) -> dict[str, str]:
+    if len(user_input[CONF_PLAYERS]) < 2:
+        return {"base": "min_players"}
+    for key in (CONF_NOTIFY_PATH, CONF_EXIT_PATH):
+        path = (user_input.get(key) or "").strip()
+        if path and (not path.startswith("/") or path.startswith("//") or " " in path):
+            return {key: "invalid_path"}
+    return {}
+
+
+def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
+    options = {k: (int(v) if isinstance(v, float) else v) for k, v in user_input.items()}
+    for key in (CONF_NOTIFY_PATH, CONF_EXIT_PATH, CONF_EXIT_LABEL):
+        options[key] = (options.get(key) or "").strip()
+    return options
+
+
 def _collect_notify(hass: HomeAssistant, players: list[str], user_input: dict[str, Any]) -> dict[str, str]:
     return {p: user_input.get(_label(hass, p), NO_NOTIFY) for p in players}
 
@@ -123,10 +146,8 @@ class ConnectFourConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
-            if len(user_input[CONF_PLAYERS]) < 2:
-                errors["base"] = "min_players"
-            else:
-                self._options = {k: (int(v) if isinstance(v, float) else v) for k, v in user_input.items()}
+            if not (errors := _check_settings(user_input)):
+                self._options = _clean(user_input)
                 return await self.async_step_notify()
         return self.async_show_form(step_id="user", data_schema=await _players_schema(self.hass, user_input or _legacy_options(self.hass)), errors=errors)
 
@@ -172,10 +193,8 @@ class ConnectFourOptionsFlow(OptionsFlow):
     async def async_step_settings(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
-            if len(user_input[CONF_PLAYERS]) < 2:
-                errors["base"] = "min_players"
-            else:
-                self._options = {**self.config_entry.options, **{k: (int(v) if isinstance(v, float) else v) for k, v in user_input.items()}}
+            if not (errors := _check_settings(user_input)):
+                self._options = {**self.config_entry.options, **_clean(user_input)}
                 return await self.async_step_notify()
         return self.async_show_form(step_id="settings", data_schema=await _players_schema(self.hass, dict(self.config_entry.options)), errors=errors)
 

@@ -8,7 +8,7 @@ DOMAIN = "connect_four"
 # Earlier versions of this integration used this domain; its games and settings are imported once.
 LEGACY_DOMAIN = "fire_pa_rad"
 LEGACY_STATIC_URL = "/fire_pa_rad_static"
-VERSION = "0.4.3"
+VERSION = "0.4.7"
 
 # A waiting player may poke this long after the last move or poke.
 POKE_INTERVAL = timedelta(minutes=30)
@@ -17,6 +17,11 @@ CONF_CONFIRM = "confirm"
 CONF_PLAYERS = "players"
 CONF_NOTIFY = "notify_services"
 CONF_SHOW_PANEL = "show_panel"
+# Page a push notification opens; empty means the Connect Four panel.
+CONF_NOTIFY_PATH = "notify_path"
+# Optional "Home" button in the card's main menu: where it goes and its text.
+CONF_EXIT_PATH = "exit_path"
+CONF_EXIT_LABEL = "exit_label"
 # Users not linked to a player who may still play for everyone, e.g. a wall tablet.
 CONF_SHARED_USERS = "shared_users"
 CONF_POINTS_WIN = "points_win"

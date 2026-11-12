@@ -1,10 +1,10 @@
 /* Connect Four – card + sidebar panel for the connect_four integration. */
-const CF_VERSION = "0.4.3";
+const CF_VERSION = "0.4.7";
 
 const CF_T = {
   nb: {
     title: "4 på rad", your_games: "Dine partier", all_games: "Alle partier", scoreboard: "Poengtavle",
-    rules: "Slik spiller du", back: "Hovedmeny", your_turn: "Din tur!", your_turn_vs: "Din tur mot {n}",
+    rules: "Slik spiller du", back: "Hovedmeny", home: "Hjem", your_turn: "Din tur!", your_turn_vs: "Din tur mot {n}",
     turn_of: "{n} sin tur", turn_vs: "{n} sin tur mot {o}", waiting_for: "Venter på {n}", challenge: "Utfordre {n}", tap_start: "Trykk for å starte et parti",
     you_won: "Du vant!", you_beat: "Du slo {n}!", won: "{n} vant!", they_won: "{n} vant denne gangen", draw: "Uavgjort!",
     draw_vs: "Uavgjort mot {n}", new_round: "Ny runde", start: "Start spill", resign: "Gi opp", sure: "Sikker? Motstanderen får seieren.",
@@ -23,7 +23,7 @@ const CF_T = {
   },
   en: {
     title: "Connect Four", your_games: "Your games", all_games: "All games", scoreboard: "Scoreboard",
-    rules: "How to play", back: "Main menu", your_turn: "Your turn!", your_turn_vs: "Your turn against {n}",
+    rules: "How to play", back: "Main menu", home: "Home", your_turn: "Your turn!", your_turn_vs: "Your turn against {n}",
     turn_of: "{n}'s turn", turn_vs: "{n}'s turn against {o}", waiting_for: "Waiting for {n}", challenge: "Challenge {n}", tap_start: "Tap to start a game",
     you_won: "You won!", you_beat: "You beat {n}!", won: "{n} won!", they_won: "{n} won this time", draw: "Draw!",
     draw_vs: "Draw against {n}", new_round: "New round", start: "Start game", resign: "Resign", sure: "Sure? Your opponent wins.",
@@ -138,8 +138,25 @@ class ConnectFourCard extends HTMLElement {
 
   getCardSize() { return this._config?.mode === "full" ? 10 : 2; }
 
-  connectedCallback() { this._tick = setInterval(() => { this._sig = null; this._render(); }, 60000); }
-  disconnectedCallback() { clearInterval(this._tick); }
+  connectedCallback() {
+    this._tick = setInterval(() => { this._sig = null; this._render(); }, 60000);
+    // A full card follows ?game= in the address, so a notification link opens the game on any page.
+    this._onLoc = () => this._readLocation();
+    window.addEventListener("location-changed", this._onLoc);
+    window.addEventListener("popstate", this._onLoc);
+    this._readLocation();
+  }
+  disconnectedCallback() {
+    clearInterval(this._tick);
+    window.removeEventListener("location-changed", this._onLoc);
+    window.removeEventListener("popstate", this._onLoc);
+  }
+
+  _readLocation() {
+    if (this._config?.mode !== "full") return;
+    const game = new URLSearchParams(location.search).get("game");
+    if ((game || null) !== (this._selected || null)) this.select(game);
+  }
 
   set hass(hass) {
     this._hass = hass;
@@ -148,7 +165,19 @@ class ConnectFourCard extends HTMLElement {
     if (sig !== this._sig) { this._sig = sig; this._render(); }
   }
 
-  select(gameId) { this._selected = gameId || null; this._confirm = false; this._sig = null; this._render(); this.dispatchEvent(new CustomEvent("cf-select", { detail: this._selected })); }
+  // push: opening a game from the main menu adds a history entry, so the phone's back button returns to the menu.
+  select(gameId, push = false) {
+    this._selected = gameId || null; this._confirm = false; this._sig = null; this._render();
+    if (this._config?.mode === "full" && this.isConnected) {
+      const url = new URL(location.href);
+      if ((url.searchParams.get("game") || null) !== this._selected) {
+        if (this._selected) url.searchParams.set("game", this._selected); else url.searchParams.delete("game");
+        if (push && this._selected) history.pushState({ ...(history.state || {}), cfGame: this._selected }, "", url.pathname + url.search + url.hash);
+        else history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+      }
+    }
+    this.dispatchEvent(new CustomEvent("cf-select", { detail: this._selected }));
+  }
 
   _t(key, vars = {}) {
     const s = (CF_T[cfLang(this._hass)] || CF_T.en)[key] || key;
@@ -207,8 +236,15 @@ class ConnectFourCard extends HTMLElement {
   }
 
   // ---- lobby -----------------------------------------------------------
+  // Home button: the card's own exit_path/exit_label win over the integration settings; exit_path: "" hides it.
+  _exit() {
+    const a = this._hass?.states[this._config.entity]?.attributes || {};
+    return { path: "exit_path" in this._config ? this._config.exit_path : a.exit_path, label: this._config.exit_label || a.exit_label };
+  }
+
   _renderLobby(m) {
-    let html = `<h2>🔴🟡 ${cfEsc(this._config.title || this._t("title"))}</h2>`;
+    const ex = this._exit(), exit = ex.path ? `<button class="back" data-action="exit"><ha-icon icon="${cfEsc(this._config.exit_icon || "mdi:home")}"></ha-icon>${cfEsc(ex.label || this._t("home"))}</button>` : "";
+    let html = `${exit}<h2>🔴🟡 ${cfEsc(this._config.title || this._t("title"))}</h2>`;
     if (m.me) {
       const on = this._pushOn(m);
       html += `<div class="push" data-action="push" data-on="${on}"><span>🔔 ${this._t("push_label")}</span><span class="toggle${on ? " on" : ""}"></span></div>`;
@@ -262,7 +298,7 @@ class ConnectFourCard extends HTMLElement {
   // ---- one game -----------------------------------------------------------
   _renderGame(m) {
     const pair = m.pairs.find((x) => x.id === this._selected);
-    if (!pair) { this._selected = null; return this._renderLobby(m); }
+    if (!pair) { this._selected = null; queueMicrotask(() => this.select(null)); return this._renderLobby(m); }
     const g = pair.game, id = pair.id;
     const active = this._active(g);
     const inGame = m.me === g.p1 || m.me === g.p2;
@@ -369,12 +405,13 @@ class ConnectFourCard extends HTMLElement {
     const m = this._model();
     const action = el.dataset.action;
     if (action === "nav") return cfNavigate(this._config.navigation_path);
-    if (action === "back") return this.select(null);
+    if (action === "exit") return this._exit().path && cfNavigate(this._exit().path);
+    if (action === "back") return history.state?.cfGame === this._selected && this._selected ? history.back() : this.select(null);
     if (action === "push") return this._call("set_notifications", { enabled: el.dataset.on !== "true" });
     if (action === "open") {
       const pair = m.pairs.find((x) => x.id === el.dataset.game);
       if (pair && pair.game.status === "none" && el.dataset.opp) await this._call("start", { opponent: el.dataset.opp });
-      return this.select(el.dataset.game);
+      return this.select(el.dataset.game, true);
     }
     const pair = m.pairs.find((x) => x.id === this._selected);
     if (!pair) return;
@@ -397,16 +434,6 @@ class ConnectFourPanel extends HTMLElement {
   set narrow(narrow) { this._narrow = narrow; if (this._menu) this._menu.narrow = narrow; }
   set panel(panel) { this._panel = panel; }
 
-  connectedCallback() {
-    this._onLoc = () => this._readLocation();
-    window.addEventListener("location-changed", this._onLoc);
-    window.addEventListener("popstate", this._onLoc);
-  }
-  disconnectedCallback() {
-    window.removeEventListener("location-changed", this._onLoc);
-    window.removeEventListener("popstate", this._onLoc);
-  }
-
   _build() {
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `<style>
@@ -420,19 +447,7 @@ class ConnectFourPanel extends HTMLElement {
     root.getElementById("menu").appendChild(this._menu);
     this._card = document.createElement("connect-four-card");
     this._card.setConfig({ mode: "full" });
-    this._card.addEventListener("cf-select", (ev) => {
-      const url = new URL(location.href);
-      if (ev.detail) url.searchParams.set("game", ev.detail); else url.searchParams.delete("game");
-      history.replaceState(null, "", url.pathname + url.search);
-    });
     root.querySelector(".wrap").appendChild(this._card);
-    this._readLocation();
-  }
-
-  _readLocation() {
-    if (!this._card || !location.pathname.startsWith("/connect-four")) return;
-    const game = new URLSearchParams(location.search).get("game");
-    if ((game || null) !== (this._card._selected || null)) this._card.select(game);
   }
 }
 

@@ -20,6 +20,9 @@ from .const import (
     CONF_LIGHTNING_BONUS,
     CONF_LIGHTNING_MOVES,
     CONF_NOTIFY,
+    CONF_EXIT_LABEL,
+    CONF_EXIT_PATH,
+    CONF_NOTIFY_PATH,
     CONF_PLAYERS,
     CONF_POINTS_DRAW,
     CONF_POINTS_WIN,
@@ -358,11 +361,16 @@ class ConnectFourManager:
             return None
         return service
 
+    def notify_url(self, game_id: str) -> str:
+        """Link that opens the game: the chosen page, or the Connect Four panel."""
+        path = (self.entry.options.get(CONF_NOTIFY_PATH) or "").strip() or f"/{PANEL_URL_PATH}"
+        return f"{path}{'&' if '?' in path else '?'}game={game_id}"
+
     async def _notify_text(self, person: str, message: str, game_id: str) -> None:
         if (service := self.notify_service(person)) is None:
             return
         domain, name = service.split(".", 1)
-        url = f"/{PANEL_URL_PATH}?game={game_id}"
+        url = self.notify_url(game_id)
         try:
             await self.hass.services.async_call(
                 domain, name,
@@ -405,4 +413,5 @@ class ConnectFourManager:
             "players": players, "games": games, "shared_users": self.shared_users, "total": self.data.get("total", 0), "last_result": self.data.get("last_result", ""),
             "points_win": self._opt(CONF_POINTS_WIN, DEFAULT_POINTS_WIN), "points_draw": self._opt(CONF_POINTS_DRAW, DEFAULT_POINTS_DRAW),
             "lightning_moves": self._opt(CONF_LIGHTNING_MOVES, DEFAULT_LIGHTNING_MOVES), "lightning_bonus": self._opt(CONF_LIGHTNING_BONUS, DEFAULT_LIGHTNING_BONUS),
+            "exit_path": self.entry.options.get(CONF_EXIT_PATH) or "", "exit_label": self.entry.options.get(CONF_EXIT_LABEL) or "",
         }

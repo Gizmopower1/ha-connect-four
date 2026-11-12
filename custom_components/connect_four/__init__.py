@@ -135,17 +135,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConnectFourConfigEntry) 
     await manager.async_load()
     entry.runtime_data = manager
 
-    if entry.options.get(CONF_SHOW_PANEL, True):
-        async_register_built_in_panel(
-            hass,
-            component_name="custom",
-            sidebar_title=entry.title,
-            sidebar_icon="mdi:circle-multiple",
-            frontend_url_path=PANEL_URL_PATH,
-            config={"_panel_custom": {"name": PANEL_ELEMENT, "module_url": MODULE_URL, "embed_iframe": False, "trust_external": False}},
-            require_admin=False,
-            update=True,
-        )
+    # The panel is always registered, so links to it (such as older notifications) keep working;
+    # without a sidebar title Home Assistant leaves it out of the sidebar.
+    show = entry.options.get(CONF_SHOW_PANEL, True)
+    async_register_built_in_panel(
+        hass,
+        component_name="custom",
+        sidebar_title=entry.title if show else None,
+        sidebar_icon="mdi:circle-multiple" if show else None,
+        frontend_url_path=PANEL_URL_PATH,
+        config={"_panel_custom": {"name": PANEL_ELEMENT, "module_url": MODULE_URL, "embed_iframe": False, "trust_external": False}},
+        require_admin=False,
+        update=True,
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload))

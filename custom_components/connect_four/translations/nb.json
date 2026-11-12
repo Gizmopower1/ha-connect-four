@@ -8,13 +8,19 @@
           "players": "Spillere",
           "shared_users": "Felles brukere som kan spille for alle (f.eks. nettbrett på veggen)",
           "show_panel": "Vis i sidemenyen",
+          "notify_path": "Tilbake til spillmeny",
+          "exit_path": "Tilbake til Home Assistant",
+          "exit_label": "Tekst på Hjem-knappen",
           "points_win": "Poeng for seier",
           "points_draw": "Poeng for uavgjort",
           "lightning_moves": "Lynseier: maks egne trekk",
           "lightning_bonus": "Lynseier: bonuspoeng"
         },
         "data_description": {
-          "shared_users": "Brukere som ikke er koblet til en spiller, kan bare se på, med mindre du velger dem her. Velg bare en bruker som hele familien deler, for eksempel et nettbrett på veggen."
+          "shared_users": "Brukere som ikke er koblet til en spiller, kan bare se på, med mindre du velger dem her. Velg bare en bruker som hele familien deler, for eksempel et nettbrett på veggen.",
+          "notify_path": "La stå tomt for å åpne Connect Four-panelet. Eller skriv inn adressen til et dashboard, for eksempel /mitt-dashboard/spill, hvis siden har et Connect Four-kort i full visning. Kortet åpner da partiet.",
+          "exit_path": "Legger til en knapp øverst i spillets hovedmeny som går ut av spillet, for eksempel /lovelace/0, eller / for hver brukers standard-dashboard. Nyttig når dere spiller fra et dashboard i kiosk-modus uten sidemeny. La stå tomt for ingen knapp.",
+          "exit_label": "La stå tomt for å vise «Hjem»."
         }
       },
       "notify": {
@@ -23,7 +29,8 @@
       }
     },
     "error": {
-      "min_players": "Velg minst to spillere."
+      "min_players": "Velg minst to spillere.",
+      "invalid_path": "Skriv en adresse som starter med /, for eksempel /mitt-dashboard/spill."
     },
     "abort": {
       "single_instance_allowed": "4 på rad er allerede satt opp. Bruk «Konfigurer» for å endre spillerne."
@@ -46,13 +53,19 @@
           "players": "Spillere",
           "shared_users": "Felles brukere som kan spille for alle (f.eks. nettbrett på veggen)",
           "show_panel": "Vis i sidemenyen",
+          "notify_path": "Tilbake til spillmeny",
+          "exit_path": "Tilbake til Home Assistant",
+          "exit_label": "Tekst på Hjem-knappen",
           "points_win": "Poeng for seier",
           "points_draw": "Poeng for uavgjort",
           "lightning_moves": "Lynseier: maks egne trekk",
           "lightning_bonus": "Lynseier: bonuspoeng"
         },
         "data_description": {
-          "shared_users": "Brukere som ikke er koblet til en spiller, kan bare se på, med mindre du velger dem her. Velg bare en bruker som hele familien deler, for eksempel et nettbrett på veggen."
+          "shared_users": "Brukere som ikke er koblet til en spiller, kan bare se på, med mindre du velger dem her. Velg bare en bruker som hele familien deler, for eksempel et nettbrett på veggen.",
+          "notify_path": "La stå tomt for å åpne Connect Four-panelet. Eller skriv inn adressen til et dashboard, for eksempel /mitt-dashboard/spill, hvis siden har et Connect Four-kort i full visning. Kortet åpner da partiet.",
+          "exit_path": "Legger til en knapp øverst i spillets hovedmeny som går ut av spillet, for eksempel /lovelace/0, eller / for hver brukers standard-dashboard. Nyttig når dere spiller fra et dashboard i kiosk-modus uten sidemeny. La stå tomt for ingen knapp.",
+          "exit_label": "La stå tomt for å vise «Hjem»."
         }
       },
       "notify": {
@@ -69,6 +82,7 @@
     },
     "error": {
       "min_players": "Velg minst to spillere.",
+      "invalid_path": "Skriv en adresse som starter med /, for eksempel /mitt-dashboard/spill.",
       "confirm_required": "Kryss av i boksen for å bekrefte."
     },
     "abort": {
@@ -78,56 +92,104 @@
   },
   "entity": {
     "sensor": {
-      "games": { "name": "Partier i gang" },
-      "points": { "name": "Poeng {name}" }
+      "games": {
+        "name": "Partier i gang"
+      },
+      "points": {
+        "name": "Poeng {name}"
+      }
     },
     "switch": {
-      "push": { "name": "Push-varsler {name}" }
+      "push": {
+        "name": "Push-varsler {name}"
+      }
     }
   },
   "exceptions": {
-    "not_loaded": { "message": "4 på rad er ikke satt opp." },
-    "unknown_game": { "message": "Ukjent parti: {game_id}." },
-    "invalid_players": { "message": "Velg to forskjellige spillere som er med i 4 på rad." },
-    "not_playing": { "message": "Det er ikke noe parti i gang." },
-    "not_your_game": { "message": "Du kan bare spille i dine egne partier." },
-    "not_a_player": { "message": "Brukeren din er ikke koblet til en spiller, så du kan bare se på. Be en administrator koble brukeren din til personen din, eller legge den til som felles bruker i innstillingene for 4 på rad." },
-    "not_your_turn": { "message": "Det er {name} sin tur." },
-    "column_full": { "message": "Den kolonnen er full." },
-    "not_your_settings": { "message": "Du kan bare endre dine egne varsler." },
-    "poke_your_turn": { "message": "Det er din egen tur." },
-    "poke_no_push": { "message": "{name} får ikke varsler." },
-    "poke_too_soon": { "message": "Du kan dulte igjen om {minutes} min." }
+    "not_loaded": {
+      "message": "4 på rad er ikke satt opp."
+    },
+    "unknown_game": {
+      "message": "Ukjent parti: {game_id}."
+    },
+    "invalid_players": {
+      "message": "Velg to forskjellige spillere som er med i 4 på rad."
+    },
+    "not_playing": {
+      "message": "Det er ikke noe parti i gang."
+    },
+    "not_your_game": {
+      "message": "Du kan bare spille i dine egne partier."
+    },
+    "not_a_player": {
+      "message": "Brukeren din er ikke koblet til en spiller, så du kan bare se på. Be en administrator koble brukeren din til personen din, eller legge den til som felles bruker i innstillingene for 4 på rad."
+    },
+    "not_your_turn": {
+      "message": "Det er {name} sin tur."
+    },
+    "column_full": {
+      "message": "Den kolonnen er full."
+    },
+    "not_your_settings": {
+      "message": "Du kan bare endre dine egne varsler."
+    },
+    "poke_your_turn": {
+      "message": "Det er din egen tur."
+    },
+    "poke_no_push": {
+      "message": "{name} får ikke varsler."
+    },
+    "poke_too_soon": {
+      "message": "Du kan dulte igjen om {minutes} min."
+    }
   },
   "services": {
     "start": {
       "name": "Start parti",
       "description": "Start et nytt parti (eller ny runde). Kalles det av en innlogget spiller, utfordrer den spilleren motstanderen.",
       "fields": {
-        "opponent": { "name": "Motstander", "description": "Personen det skal spilles mot." },
-        "player": { "name": "Spiller", "description": "Trengs bare når den som kaller ikke er spiller (f.eks. felles nettbrett)." }
+        "opponent": {
+          "name": "Motstander",
+          "description": "Personen det skal spilles mot."
+        },
+        "player": {
+          "name": "Spiller",
+          "description": "Trengs bare når den som kaller ikke er spiller (f.eks. felles nettbrett)."
+        }
       }
     },
     "drop": {
       "name": "Legg brikke",
       "description": "Slipp brikken til den som har tur i en kolonne.",
       "fields": {
-        "game_id": { "name": "Parti", "description": "Parti-id, f.eks. player1__player2." },
-        "column": { "name": "Kolonne", "description": "Kolonne 0–6, fra venstre." }
+        "game_id": {
+          "name": "Parti",
+          "description": "Parti-id, f.eks. player1__player2."
+        },
+        "column": {
+          "name": "Kolonne",
+          "description": "Kolonne 0–6, fra venstre."
+        }
       }
     },
     "resign": {
       "name": "Gi opp",
       "description": "Gi opp partiet. Med færre enn to brikker lagt avbrytes partiet uten poeng.",
       "fields": {
-        "game_id": { "name": "Parti", "description": "Parti-id." }
+        "game_id": {
+          "name": "Parti",
+          "description": "Parti-id."
+        }
       }
     },
     "poke": {
       "name": "Dult",
       "description": "Minn motstanderen på at det er deres tur, med et varsel. Mulig 30 minutter etter siste trekk eller dult.",
       "fields": {
-        "game_id": { "name": "Parti", "description": "Parti-id." }
+        "game_id": {
+          "name": "Parti",
+          "description": "Parti-id."
+        }
       }
     },
     "reset_scores": {
@@ -138,8 +200,14 @@
       "name": "Velg varsler",
       "description": "Slå push-varsler av eller på. En innlogget spiller endrer sine egne; ellers må spilleren velges.",
       "fields": {
-        "enabled": { "name": "På", "description": "Om det skal sendes push-varsler." },
-        "player": { "name": "Spiller", "description": "Trengs bare når den som kaller ikke er spiller (f.eks. felles nettbrett)." }
+        "enabled": {
+          "name": "På",
+          "description": "Om det skal sendes push-varsler."
+        },
+        "player": {
+          "name": "Spiller",
+          "description": "Trengs bare når den som kaller ikke er spiller (f.eks. felles nettbrett)."
+        }
       }
     }
   }

@@ -315,3 +315,44 @@ async def test_unlinked_user_can_only_watch(hass, persons, frontend_mocks):
     await call(hass, "drop", {"game_id": GAME_AB, "column": 4}, "user-tablet")
     await call(hass, "drop", {"game_id": GAME_AB, "column": 3}, None)
     assert summary(hass)["games"][GAME_AB]["moves"] == 3
+
+
+async def test_notification_path_and_hidden_panel(hass, persons, frontend_mocks):
+    """Notifications open the chosen page, and a hidden panel stays registered for older links."""
+    notify = async_mock_service(hass, "notify", "mobile_app_player2")
+    entry = await setup_entry(hass, notify={A: NO_NOTIFY, B: "notify.mobile_app_player2", C: NO_NOTIFY})
+    manager = entry.runtime_data
+    assert manager.notify_url(GAME_AB) == f"/connect-four?game={GAME_AB}"
+    assert frontend_mocks["panel"].call_args.kwargs["sidebar_title"] == "Connect Four"
+
+    # Invalid paths are refused.
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "settings"})
+    form = {CONF_PLAYERS: [A, B, C], "show_panel": False, "points_win": 3, "points_draw": 1, "lightning_moves": 7, "lightning_bonus": 1}
+    for bad in ("game", "//evil.example/x", "/a b"):
+        result = await hass.config_entries.options.async_configure(result["flow_id"], {**form, "notify_path": bad})
+        assert result["errors"] == {"notify_path": "invalid_path"}
+        result = await hass.config_entries.options.async_configure(result["flow_id"], {**form, "exit_path": bad})
+        assert result["errors"] == {"exit_path": "invalid_path"}
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {**form, "notify_path": " /games/play?kiosk ", "exit_path": " /lovelace/0 ", "exit_label": " Home "}
+    )
+    assert result["step_id"] == "notify"
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"Player1": NO_NOTIFY, "Player2": "notify.mobile_app_player2", "Player3": NO_NOTIFY})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+
+    assert entry.options["notify_path"] == "/games/play?kiosk"
+    assert (summary(hass)["exit_path"], summary(hass)["exit_label"]) == ("/lovelace/0", "Home")
+    # The panel is registered again on reload, without a sidebar entry.
+    kwargs = frontend_mocks["panel"].call_args.kwargs
+    assert kwargs["sidebar_title"] is None
+    assert kwargs["frontend_url_path"] == "connect-four"
+
+    manager = entry.runtime_data
+    assert manager.notify_url(GAME_AB) == f"/games/play?kiosk&game={GAME_AB}"
+    with patch("custom_components.connect_four.manager.random.choice", return_value=1):
+        await call(hass, "start", {"opponent": B}, "user-player1")
+    await hass.async_block_till_done()
+    assert notify[-1].data["data"]["url"] == f"/games/play?kiosk&game={GAME_AB}"
+    assert notify[-1].data["data"]["clickAction"] == f"/games/play?kiosk&game={GAME_AB}"
